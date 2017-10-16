@@ -1,1 +1,5 @@
 company_data
+*__pycache__
+test.py
+test.ipynb
+*.ipynb_checkpoints
