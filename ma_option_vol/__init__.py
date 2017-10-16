@@ -1,3 +1,3 @@
-import openypyxl
+import openpyxl
 import datetime as dt
 

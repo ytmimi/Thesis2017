@@ -4,3 +4,5 @@
 test.py
 test.ipynb
 *.ipynb_checkpoints
+company_data/acquirer
+company_data/target
