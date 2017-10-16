@@ -1,5 +1,6 @@
 #######Done
 import openpyxl
+import datetime as dt
 
 
 def create_company_workbooks(sample_file_path,target_path, acquirer_path):
@@ -15,7 +16,7 @@ def create_company_workbooks(sample_file_path,target_path, acquirer_path):
         else:
             #creates the new workbooks
             new_target_workbook(row, target_path)
-            new_acquirer_workbook(sheet, acquirer_path)
+            new_acquirer_workbook(row, acquirer_path)
             break
     print('done')
 

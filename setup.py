@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='ma_option_vol',
-      version='1.0.3',
+      version='1.0.6',
       
       #project desctiption
       description='Thesis Code',
@@ -24,10 +24,12 @@ setup(name='ma_option_vol',
       install_requires=['openpyxl'],
       
       #non python files to be included with the source distribution
-      package_data={
-        'company_data': ['sample/*.xlsx'],
-      },
+      # package_data={
+      #   'company_data': ['sample/*.xlsx'],
+      # },
 
       #files stored in a directory that doesn't include an __init__.py file
-      data_files=[('', ['LICENSE.txt','README.md'])]
+      include_package_data=True,
+      data_files=[('', ['LICENSE.txt','README.md']),
+                  ('company_data',['sample/*.xlsx','acquirer/','target/'])],
      )
