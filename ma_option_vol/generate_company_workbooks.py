@@ -1,4 +1,6 @@
 #######Done
+import openpyxl
+
 
 def create_company_workbooks(sample_file_path,target_path, acquirer_path):
     #saves the n
@@ -17,8 +19,7 @@ def create_company_workbooks(sample_file_path,target_path, acquirer_path):
             break
     print('done')
 
-
-    def new_target_workbook(row_data, target_path):
+def new_target_workbook(row_data, target_path):
     '''
     row_data is a tuple with the following indexes
     0)Deal Type 1)Announce Date 2)Completion/Termination Date
@@ -38,20 +39,18 @@ def create_company_workbooks(sample_file_path,target_path, acquirer_path):
             ['End Date', row_data[2].value.date()],
             ['Formated Start Date',str(start_date.date()).replace('-','')],
             ['Formated End Date',str(row_data[2].value.date()).replace('-','')]]
-    
     #creates a new Workbook
     wb_target = openpyxl.Workbook()
     target_sheet = wb_target.get_active_sheet()
     target_sheet.title = 'Options Chain'
-            
-
     #appends the data to the workbook        
     for (index, cell) in enumerate(target_sheet['A1:B8']):
         (cell[0].value, cell[1].value) = data[index]
-    
     target_sheet['A10'] = add_BDS_OPT_CHAIN(ticker_cell='B2',type_cell='B3', date_override_cell='B7')
           
     #save the worksheet
+    final_path = '/'.join(target_path,'{}.xlsx'.format(row_data[3].value))
+    print(final_path)
     #wb_target.save(target_path)
     
     
@@ -88,6 +87,8 @@ def new_acquirer_workbook(row_data, acquirer_path):
     acquirer_sheet['A10'] = add_BDS_OPT_CHAIN(ticker_cell='B2',type_cell='B3', date_override_cell='B7')
           
     #save the worksheet
+    final_path = '/'.join(acquirer_path,'{}.xlsx'.format(row_data[6].value))
+    print(final_path)
     #wb_acquirer.save(acquirer_path)
 
 
