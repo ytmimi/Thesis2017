@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='ma_option_vol',
-      version='1.0.2',
+      version='1.0.3',
       
       #project desctiption
       description='Thesis Code',
@@ -26,6 +26,8 @@ setup(name='ma_option_vol',
       #non python files to be included with the source distribution
       package_data={
         'company_data': ['sample/*.xlsx'],
-        '': ['LICENSE.txt','README.md'],
       },
+
+      #files stored in a directory that doesn't include an __init__.py file
+      data_files=[('', ['LICENSE.txt','README.md'])]
      )
