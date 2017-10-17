@@ -31,11 +31,16 @@ def add_BDS_OPT_CHAIN(ticker_cell, type_cell, date_override_cell):
 
 
 def add_BDP_fuction(security_cell, field_cell):
-    #creates the string version of the Bloomberg BDP function to be used in an excel worksheet:
-    #if a cell reference is passed the field_cell variable will most likely be a bloomberg field
-    if len(field_cell) > 2: 
-        BDP = '=BDP({},CONCATENATE("{}"))'.format(security_cell, field_cell)
-    #if the field_cell <= 2, then chances are a cell reference was passed
+    '''
+    Creates the string version of the Bloomberg BDP function to be used in an excel worksheet
+    the security_cell, and field_cell can either be cell references or strings
+    '''
+    if len(security_cell) and len(field_cell) > 2:
+        BDP = '=BDP("{}",CONCATENATE("{}"))'.format(security_cell, field_cell)
+    elif len(security_cell) > 2: 
+        BDP = '=BDP("{}",CONCATENATE({}))'.format(security_cell, field_cell)
+    elif len(field_cell) > 2:
+        BDP = '=BDP({},CONCATENATE("{}""))'.format(security_cell, field_cell) 
     else:
         BDP = '=BDP({},CONCATENATE({}))'.format(security_cell, field_cell)
     return BDP
