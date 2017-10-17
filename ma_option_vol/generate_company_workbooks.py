@@ -28,7 +28,7 @@ class Create_Company_Workbooks():
                 #creates the new workbooks
                 self.new_target_workbook(row_data=row, target_path= self.target_path)
                 self.new_acquirer_workbook(row_data=row, acquirer_path= self.acquirer_path)
-                #break
+                break #<----remember to remove this after done testing
         print('\nDone creating company files.')
 
 
@@ -57,6 +57,7 @@ class Create_Company_Workbooks():
         wb_target = openpyxl.Workbook()
         target_sheet = wb_target.get_active_sheet()
         target_sheet.title = 'Options Chain'
+        
         #appends the data to the workbook        
         for (index, cell) in enumerate(target_sheet['A1:B8']):
             #tuple unpacking to set the cell values 
@@ -66,16 +67,17 @@ class Create_Company_Workbooks():
         
         #checks to see if the target_path exists, and if it doesn't it creates it
         if os.path.exists(target_path):
-            #joins the path with the file Name 'Target Name.xlsx'
+            #joins the path with the file Name 'Target Name.xlsx', replacing / with _ to create valid excel file names
             file_name = row_data[3].value.replace('/','_')
             final_path = '/'.join([target_path,'{}.xlsx'.format(file_name)])
              #save the worksheet
             wb_target.save(final_path)
         else:
-            #makes the file directory 
+            #if the path doesn't exist, create it 
             os.makedirs(target_path, exist_ok=False)
-            print('generating file path')
-            final_path = '/'.join([target_path,'{}.xlsx'.format(row_data[6].value)])
+            print('Generating file path: {}'.format(target_path))
+            file_name = row_data[3].value.replace('/','_')
+            final_path = '/'.join([target_path,'{}.xlsx'.format(file_name)])
             #save the worksheet
             wb_target.save(final_path)
         
@@ -103,6 +105,7 @@ class Create_Company_Workbooks():
         wb_acquirer = openpyxl.Workbook()
         acquirer_sheet = wb_acquirer.get_active_sheet()
         acquirer_sheet.title = 'Options Chain'     
+        
         #appends the data to the workbook        
         for (index, cell) in enumerate(acquirer_sheet['A1:B8']):
             #tuple unpacking to set the cell values 
@@ -112,16 +115,17 @@ class Create_Company_Workbooks():
         
         #checks to see if the acquirer_path exists, and if it doesn't it creates it
         if os.path.exists(acquirer_path):
-            #joins the path with the file Name 'Aquirer Name.xlsx'
+            #joins the path with the file Name 'Aquirer Name.xlsx', replacing / with _to create valid excel file names
             file_name = row_data[6].value.replace('/','_')
             final_path = '/'.join([acquirer_path,'{}.xlsx'.format(file_name)])
             #save the worksheet
             wb_acquirer.save(final_path)
         else:
+            #if the path doesn't exist, create it
             os.makedirs(acquirer_path, exist_ok=False)
-            print('generating file path')
+            print('Generating file path: {}'.format(acquirer_path))
             file_name = row_data[6].value.replace('/','_')
-            final_path = '/'.join([acquirer_path,'{}.xlsx'.format(row_data[6].value)])
+            final_path = '/'.join([acquirer_path,'{}.xlsx'.format(file_name)])
             #save the worksheet
             wb_acquirer.save(final_path)
 
