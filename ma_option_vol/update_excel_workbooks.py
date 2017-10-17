@@ -1,6 +1,7 @@
 import openpyxl
 
 
+
 def create_option_contract_tabs(file_path):
     '''
     NOTE: the data from Bloomberg should be copied into column D and E respecivly

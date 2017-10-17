@@ -9,16 +9,15 @@ path = os.path.join(parent_path,'ma_option_vol')
 sys.path.append(path)
 
 #imports the add_bloomber_excel_functions module
-from ma_option_vol import generate_company_workbooks as gcw
+import generate_company_workbooks as gcw
 
 
-
+#harded coded, need to be flexible so these should be updated
 sample_path = '/Users/yacintmimi/Documents/UVM/Fall 2017/ma_option_vol/company_data/sample/M&A List A-S&P500 T-US Sample Set.xlsx'
 target_path = '/Users/yacintmimi/Documents/UVM/Fall 2017/ma_option_vol/company_data/target'
 acquirer_path = '/Users/yacintmimi/Documents/UVM/Fall 2017/ma_option_vol/company_data/acquirer'
 
 
 c = gcw.Create_Company_Workbooks(source_file = sample_path, target_path= target_path, acquirer_path = acquirer_path)
-print(c.source_file)
 c.create_company_workbooks()
 

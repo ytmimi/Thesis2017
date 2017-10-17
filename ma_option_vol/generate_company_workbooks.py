@@ -1,15 +1,14 @@
 #imports for the module
 import openpyxl
 import datetime as dt
-#imports the add_bloomberg_excel_functions from the 
-from . import add_bloomberg_excel_functions as abxl
+import os
+#imports the add_bloomberg_excel_functions from the current module
+import add_bloomberg_excel_functions as abxl
 
 class Create_Company_Workbooks():
     
 
     def __init__(self, source_file, target_path, acquirer_path):
-        #import openpyxl
-        #import datetime as dt
         self.source_file = source_file
         self.target_path = target_path
         self.acquirer_path = acquirer_path
@@ -29,7 +28,7 @@ class Create_Company_Workbooks():
                 #creates the new workbooks
                 self.new_target_workbook(row_data=row, target_path= self.target_path)
                 self.new_acquirer_workbook(row_data=row, acquirer_path= self.acquirer_path)
-                break
+                #break
         print('\nDone creating company files.')
 
 
@@ -53,6 +52,7 @@ class Create_Company_Workbooks():
                 ['End Date', row_data[2].value.date()],
                 ['Formated Start Date',str(start_date.date()).replace('-','')],
                 ['Formated End Date',str(row_data[2].value.date()).replace('-','')]]
+
         #creates a new Workbook
         wb_target = openpyxl.Workbook()
         target_sheet = wb_target.get_active_sheet()
@@ -62,12 +62,22 @@ class Create_Company_Workbooks():
             #tuple unpacking to set the cell values 
             (cell[0].value, cell[1].value) = data[index]
         target_sheet['A10'] = abxl.add_BDS_OPT_CHAIN(ticker_cell='B2',type_cell='B3', date_override_cell='B7')
-        print(abxl.add_BDS_OPT_CHAIN(ticker_cell='B2',type_cell='B3', date_override_cell='B7'))     
         
-        #save the worksheet
-        #joins the path with the file Name 'Target Name.xlsx'
-        final_path = '/'.join([target_path,'{}.xlsx'.format(row_data[3].value)])
-        #wb_target.save(final_path)
+        
+        #checks to see if the target_path exists, and if it doesn't it creates it
+        if os.path.exists(target_path):
+            #joins the path with the file Name 'Target Name.xlsx'
+            file_name = row_data[3].value.replace('/','_')
+            final_path = '/'.join([target_path,'{}.xlsx'.format(file_name)])
+             #save the worksheet
+            wb_target.save(final_path)
+        else:
+            #makes the file directory 
+            os.makedirs(target_path, exist_ok=False)
+            print('generating file path')
+            final_path = '/'.join([target_path,'{}.xlsx'.format(row_data[6].value)])
+            #save the worksheet
+            wb_target.save(final_path)
         
         
     def new_acquirer_workbook(self,row_data, acquirer_path):
@@ -99,12 +109,22 @@ class Create_Company_Workbooks():
             (cell[0].value, cell[1].value) = data[index]
         acquirer_sheet['A10'] = abxl.add_BDS_OPT_CHAIN(ticker_cell='B2',type_cell='B3', date_override_cell='B7')
               
-        #save the worksheet
-        #joins the path with the file Name 'Aquirer Name.xlsx'
-        final_path = '/'.join([acquirer_path,'{}.xlsx'.format(row_data[6].value)])
-        #wb_acquirer.save(final_path)
+        
+        #checks to see if the acquirer_path exists, and if it doesn't it creates it
+        if os.path.exists(acquirer_path):
+            #joins the path with the file Name 'Aquirer Name.xlsx'
+            file_name = row_data[6].value.replace('/','_')
+            final_path = '/'.join([acquirer_path,'{}.xlsx'.format(file_name)])
+            #save the worksheet
+            wb_acquirer.save(final_path)
+        else:
+            os.makedirs(acquirer_path, exist_ok=False)
+            print('generating file path')
+            file_name = row_data[6].value.replace('/','_')
+            final_path = '/'.join([acquirer_path,'{}.xlsx'.format(row_data[6].value)])
+            #save the worksheet
+            wb_acquirer.save(final_path)
 
-    
 
 
 
