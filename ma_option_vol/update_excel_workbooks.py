@@ -1,18 +1,23 @@
 import openpyxl
-import add_bloomberg_excel_functions
+import add_bloomberg_excel_functions as abxl
 
-def update_sheet_with_BDP_description(file_path):
+def update_sheet_with_BDP_description(workbook_path, sheet_name):
     '''
-    Note: The sheet needs to be opened at least onece so that the BDS function added by create_files() can populate
-          Then make sure the notebook is saved after that.
+    Given an excel workbook, The BDP function is added with the appropriate cell reference and description  
+    Note: The excel workbook needs to be opened and saved so that bloomberg data can populate
     '''
-    wb = openpyxl.load_workbook(file_path)
-    sheet = wb.get_active_sheet()
+    #opens the workbook
+    wb = openpyxl.load_workbook(workbook_path)
+    #gets the specified sheet from the workbook
+    sheet = wb.get_sheet_by_name(sheet_name)
     
-    for i in range(10, sheet.max_row+1):
-        sheet['B{}'.format(i)] = add_BDP_fuction('A{}'.format(i), "SECURITY_DES")
-    
-    wb.save(file_path)
+    #iterate over every row in column A and B starting at A10:B10 and ending at the last row of the worksheet
+    for index, cell in enumerate(sheet['A10:B{}'.format(sheet.max_row)]):
+        #cell[0] corresponds to cells in column A and cell[1] corresponds to cells in column B
+        cell[1].value = abxl.add_BDP_fuction(cell[0].coordinate, "SECURITY_DES")
+        print(cell[0].value, cell[1].value)
+    #saves the workbook
+    wb.save(workbook_path)
 
 def update_option_contract_tabs(file_path):
     '''
@@ -87,7 +92,14 @@ def update_option_contract_tabs(file_path):
         new_sheet['H8'] = 'IVOL'
 
         #add the BDH formula to cell B9
-        new_sheet['B9'] = add_option_BDH()
+        new_sheet['B9'] = abxl.add_option_BDH(  security_name = 'B1',
+                                                fields = 'C8:H8', 
+                                                start_date = "'Options Chain'!B4",
+                                                end_date = "'Options Chain'!B6",
+                                                optional_arg = '"Days, Fill"',
+                                                optional_val = '"W,  0"')
+
+
         #Get rid of break after done testing:
         wb.save(file_path)
     print('Done')

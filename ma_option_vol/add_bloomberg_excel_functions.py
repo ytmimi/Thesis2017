@@ -9,7 +9,7 @@ def add_BDS_OPT_CHAIN(ticker_cell, type_cell, date_override_cell):
     '''
     #A cell reference follows the pattern 1 or more letters followed by 1 or more numbers.
     #the variable cell_ref is a regualr expression representing the above pattern
-    cell_ref = re.compile(r'[A-Z]+\d+')
+    cell_ref = re.compile(r'[A-Z]+\d+$')
     
     OPT_CHAIN = '"OPT_CHAIN"'
     OPTION_CHAIN_OVERRIDE = '"OPTION_CHAIN_OVERRIDE","M"'
@@ -45,11 +45,10 @@ def add_BDP_fuction(security_cell, field_cell):
     Creates a string representing the Bloomberg BDP function to be used in an excel worksheet.
     The two arguments can either be cell references or strings with valid excel BDP function arguments
     '''
-    #A cell reference follows the pattern 1 or more letters followed by 1 or more numbers.
-    #the variable cell_ref is a regualr expression representing the above pattern
-    cell_ref = re.compile(r'[A-Z]+\d+')
+    #regular expression pattern for a cell reference.
+    #The pattern is any number of of letters followed by any number of digit, and then ends
+    cell_ref = re.compile(r'[A-Z]+\d+$')
     
-
     #checks to see if both arguments are cell references or not
     if re.match(cell_ref, security_cell) and re.match(cell_ref, field_cell): 
         BDP = '=BDP({},{})'.format(security_cell, field_cell)
@@ -86,9 +85,9 @@ def add_option_BDH(security_name, fields, start_date, end_date, optional_arg = N
 
     '''
     #regular expression pattern for a cell reference. The pattern is any number of of letters followed by any number of digit.
-    cell_ref = re.compile(r'[A-Z]+\d+')
+    cell_ref = re.compile(r'[A-Z]+\d+$')
     #regular expresson pattern for a cell range. the pattern included two cell reference patterns seperated by a :
-    cell_range = re.compile(r'[A-Z]+\d+:[A-Z]+\d+')
+    cell_range = re.compile(r'[A-Z]+\d+:[A-Z]+\d+$')
 
     #regular expression for a date
     formated_date = re.compile(r'\d{8}')
@@ -166,10 +165,5 @@ def add_option_BDH(security_name, fields, start_date, end_date, optional_arg = N
     #return the BDH string
     return BDH
 
-# security_name = 'B1'
-# fields = 'C8:H8'
-# start_date = "'Options Chain'!B4"
-# end_date = "'Options Chain'!B6"
-# optional_arg = '"Days, Fill"'
-# optional_val = '"W,  0"'
+
 
