@@ -12,20 +12,20 @@ def update_sheet_with_BDP_description(workbook_path, sheet_name):
     sheet = wb.get_sheet_by_name(sheet_name)
     
     #iterate over every row in column A and B starting at A10:B10 and ending at the last row of the worksheet
-    for index, cell in enumerate(sheet['A10:B{}'.format(sheet.max_row)]):
+    for (index, cell) in enumerate(sheet['A10:B{}'.format(sheet.max_row)]):
         #cell[0] corresponds to cells in column A and cell[1] corresponds to cells in column B
         cell[1].value = abxl.add_BDP_fuction(cell[0].coordinate, "SECURITY_DES")
         print(cell[0].value, cell[1].value)
     #saves the workbook
-    wb.save(workbook_path)
+    #wb.save(workbook_path) <----uncomment this after testing
 
-def update_option_contract_tabs(file_path):
+def update_option_contract_tabs(workbook_path, sheet_name):
     '''
-    NOTE: the data from Bloomberg should be copied into column D and E respecivly
+    
     '''
-    wb = openpyxl.load_workbook(file_path)
+    wb = openpyxl.load_workbook(workbook_path)
     #The active sheet is the first sheet, which in this case is "Options Chain"
-    sheet = wb.get_sheet_by_name('Options Chain')
+    sheet = wb.get_sheet_by_name(sheet_name)
     
     
     #if there are already tabs get rid of the ones we don't want:
@@ -37,6 +37,7 @@ def update_option_contract_tabs(file_path):
     # now add the sheets that we want
     #NOTE: THE SHEET IS SET UP SO THAT VALUES WE'RE INTERESTED IN START AT ROW 10
     for i in range(10, sheet.max_row+1):
+    #for (index, cell) in enumerate(sheet['A10:B{}'.format(sheet.max_row)]):
         
         new_sheet = wb.create_sheet()
         
@@ -81,6 +82,7 @@ def update_option_contract_tabs(file_path):
             new_sheet['B4'] = description_list[2]
             new_sheet['B5'] = description_list[-1][1:]
 
+        data_table_header = ['INDEX','DATE','PX_LAST','PX_BID','PX_ASK','PX_VOLUME','OPEN_INT', 'IVOL']
         #ADDING DATA COLUMN LABELS:
         new_sheet['A8'] = 'INDEX'
         new_sheet['B8'] = 'DATE'
@@ -101,11 +103,8 @@ def update_option_contract_tabs(file_path):
 
 
         #Get rid of break after done testing:
-        wb.save(file_path)
+        #wb.save(file_path) <-------------------remove after done testing
     print('Done')
-        #if i > 15:
-        #break #<--- remove after testing.  Just want to make sure that we can create one tab the way that we want
-
 
 
 def update_index(file_path):
