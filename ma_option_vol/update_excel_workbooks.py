@@ -1,8 +1,20 @@
 import openpyxl
+import add_bloomberg_excel_functions
 
+def update_sheet_with_BDP_description(file_path):
+    '''
+    Note: The sheet needs to be opened at least onece so that the BDS function added by create_files() can populate
+          Then make sure the notebook is saved after that.
+    '''
+    wb = openpyxl.load_workbook(file_path)
+    sheet = wb.get_active_sheet()
+    
+    for i in range(10, sheet.max_row+1):
+        sheet['B{}'.format(i)] = add_BDP_fuction('A{}'.format(i), "SECURITY_DES")
+    
+    wb.save(file_path)
 
-
-def create_option_contract_tabs(file_path):
+def update_option_contract_tabs(file_path):
     '''
     NOTE: the data from Bloomberg should be copied into column D and E respecivly
     '''
@@ -83,12 +95,8 @@ def create_option_contract_tabs(file_path):
         #break #<--- remove after testing.  Just want to make sure that we can create one tab the way that we want
 
 
-def read_data_only(file_path):
-    wb=openpyxl.load_workbook(file_path, data_only = True)
-    wb.save(file_path)
 
-
-def find_index_0(file_path):
+def update_index(file_path):
     '''
     After the BDH function has been added to the file, then this function should be called
     '''
@@ -124,4 +132,9 @@ def find_index_0(file_path):
                 new_sheet['A{}'.format(row)] = reference_sheet['A{}'.format(row)].value
     
     print('done')
+    wb.save(file_path)
+
+
+def update_read_data_only(file_path):
+    wb=openpyxl.load_workbook(file_path, data_only = True)
     wb.save(file_path)
