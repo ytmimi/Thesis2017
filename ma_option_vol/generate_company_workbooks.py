@@ -64,24 +64,10 @@ class Create_Company_Workbooks():
             (cell[0].value, cell[1].value) = data[index]
         target_sheet['A10'] = abxl.add_BDS_OPT_CHAIN(ticker_cell='B2',type_cell='B3', date_override_cell='B7')
         
-        
-        #checks to see if the target_path exists, and if it doesn't it creates it
-        if os.path.exists(target_path):
-            #joins the path with the file Name 'Target Name.xlsx', replacing / with _ to create valid excel file names
-            file_name = row_data[3].value.replace('/','_')
-            final_path = '/'.join([target_path,'{}.xlsx'.format(file_name)])
-             #save the worksheet
-            wb_target.save(final_path)
-        else:
-            #if the path doesn't exist, create it 
-            os.makedirs(target_path, exist_ok=False)
-            print('Generating file path: {}'.format(target_path))
-            file_name = row_data[3].value.replace('/','_')
-            final_path = '/'.join([target_path,'{}.xlsx'.format(file_name)])
-            #save the worksheet
-            wb_target.save(final_path)
-        
-        
+        self.save_new_workbook( new_workbook= wb_target, workbook_path= target_path, 
+                                file_name= row_data[3].value, file_extension= 'xlsx')        
+       
+
     def new_acquirer_workbook(self,row_data, acquirer_path):
         '''
         row_data is a tuple with the following indexes
@@ -111,24 +97,26 @@ class Create_Company_Workbooks():
             #tuple unpacking to set the cell values 
             (cell[0].value, cell[1].value) = data[index]
         acquirer_sheet['A10'] = abxl.add_BDS_OPT_CHAIN(ticker_cell='B2',type_cell='B3', date_override_cell='B7')
-              
         
-        #checks to see if the acquirer_path exists, and if it doesn't it creates it
-        if os.path.exists(acquirer_path):
-            #joins the path with the file Name 'Aquirer Name.xlsx', replacing / with _to create valid excel file names
-            file_name = row_data[6].value.replace('/','_')
-            final_path = '/'.join([acquirer_path,'{}.xlsx'.format(file_name)])
+        #saves the workbook
+        self.save_new_workbook( new_workbook= wb_acquirer, workbook_path= acquirer_path,
+                                file_name= row_data[6].value, file_extension= 'xlsx')
+
+
+    def save_new_workbook(self,new_workbook,workbook_path, file_name, file_extension):
+        #checks to see if the given workbook_path exists
+        if os.path.exists(workbook_path):
+            #joins the path with the file Name 'file_name.file_extension', replacing / with _ to create valid excel file names
+            final_path = '/'.join([workbook_path,'{}.{}'.format(file_name.replace('/','_'), file_extension)])
             #save the worksheet
-            wb_acquirer.save(final_path)
+            new_workbook.save(final_path)    
         else:
             #if the path doesn't exist, create it
-            os.makedirs(acquirer_path, exist_ok=False)
-            print('Generating file path: {}'.format(acquirer_path))
-            file_name = row_data[6].value.replace('/','_')
-            final_path = '/'.join([acquirer_path,'{}.xlsx'.format(file_name)])
+            os.makedirs(workbook_path, exist_ok=False)
+            print('Generating file path: {}'.format(workbook_path))
+            final_path = '/'.join([workbook_path,'{}.{}'.format(file_name.replace('/','_'), file_extension)])
             #save the worksheet
-            wb_acquirer.save(final_path)
-
+            new_workbook.save(final_path)
 
 
 
