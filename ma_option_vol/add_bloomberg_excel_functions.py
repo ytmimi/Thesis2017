@@ -14,7 +14,7 @@ def add_BDS_OPT_CHAIN(ticker_cell, type_cell, date_override_cell):
     OPT_CHAIN = '"OPT_CHAIN"'
     OPTION_CHAIN_OVERRIDE = '"OPTION_CHAIN_OVERRIDE","M"'
      
-    #checks if the function arguments are cell references or strings. A string needs to be wrapped in " "
+    #checks if the function arguments are cell references or other strings. A string needs to be wrapped in " "
     if re.match(cell_ref, ticker_cell):
         TICKER ='{}'.format(ticker_cell)
     else:
@@ -84,10 +84,13 @@ def add_option_BDH(security_name, fields, start_date, end_date, optional_arg = N
                     Arguments can either be a single sting,list of strings, cell reference or cell range.
 
     '''
-    #regular expression pattern for a cell reference. The pattern is any number of of letters followed by any number of digit.
-    cell_ref = re.compile(r'[A-Z]+\d+$')
+    #regular expression pattern for a cell reference. The pattern is any number of of letters(capital or lowercase) followed by any number of digits.
+    cell_ref = re.compile(r'^[A-Za-z]+\d+$')
     #regular expresson pattern for a cell range. the pattern included two cell reference patterns seperated by a :
-    cell_range = re.compile(r'[A-Z]+\d+:[A-Z]+\d+$')
+    cell_range = re.compile(r'^[A-Za-z]+\d+:[A-Za-z]+\d+$')
+
+    #regular_expression for a sheet cell reference
+    sheet_cell_reference = re.compile(r"^'.+'![A-Za-z]+\d+$")
 
     #regular expression for a date
     formated_date = re.compile(r'\d{8}')
@@ -102,24 +105,27 @@ def add_option_BDH(security_name, fields, start_date, end_date, optional_arg = N
     #checks if fields is a list
     if type(fields) == list:
         FIELDS = '"{}"'.format(', '.join(fields))
-    #check if fields is a string
-    elif type(fields) == str:
-        FIELDS = '"{}"'.format(fields)
     #checks if fields is a single cell reference OR a range of cells
     elif re.match(cell_ref, fields) or re.match(cell_range, fields):
         FIELDS = fields
+    #check if fields is a string
+    elif type(fields) == str:
+        FIELDS = '"{}"'.format(fields)
+    
 
-    #checks if the start_date is a cell reference
-    if re.match(cell_ref, start_date):
+    #checks if the start_date is a cell reference or a cell reference from another sheet
+    if re.match(cell_ref, start_date) or re.match(sheet_cell_reference, start_date):
         START_DATE = start_date
+    #checks if the other input isn't true, check if the date was formated correctly
     elif re.match(formated_date, start_date):
         START_DATE = '"{}"'.format(start_date)
     else:
         return 'Error: start_date not formated correctly'
 
-    #checks if the end_date is a cell reference
-    if re.match(cell_ref, end_date):
+    #checks if the end_date is a cell reference or a cell reference from another sheet
+    if re.match(cell_ref, end_date) or re.match(sheet_cell_reference, start_date):
         END_DATE = end_date
+    #checks if the other input isn't true, check if the date was formated correctly    
     elif re.match(formated_date, end_date):
         END_DATE = '"{}"'.format(end_date)
     else:
@@ -130,24 +136,25 @@ def add_option_BDH(security_name, fields, start_date, end_date, optional_arg = N
         #optional_arg is a list
         if type(optional_arg) == list:
             OPTIONAL_ARG = '"{}"'.format(', '.join(optional_arg))
-        #optional_arg is a string    
-        elif type(optional_arg) == str:
-            OPTIONAL_ARG = '"{}"'.format(optional_arg)
         #checks if optional_arg is a cell reference or range
         elif re.match(cell_ref, optional_arg) or re.match(cell_range, optional_arg):
             OPTIONAL_ARG = optional_arg
-
+        #optional_arg is a string    
+        elif type(optional_arg) == str:
+            OPTIONAL_ARG = '"{}"'.format(optional_arg)
+        
     #if optional_val was provided:
     if optional_val != None:
         #if the optional_val was a list
         if type(optional_val) == list: 
             OPTIONAL_VAL = '"{}"'.format(', '.join(optional_val))
-        #if the option_val was a string
-        elif type(optional_val) == str:
-            OPTIONAL_VAL = '"{}"'.format(optional_val)
         #if the optoinal_val was a cell reference or range
         elif re.match(cell_ref, optional_val) or re.match(cell_range, optional_val):
             OPTIONAL_VAL = optional_val
+        #if the option_val was a string
+        elif type(optional_val) == str:
+            OPTIONAL_VAL = '"{}"'.format(optional_val)
+        
 
     #checks if optional_arg was given but optioinal_val wasn't
     if (optional_arg != None) and (optional_val == None):
