@@ -41,7 +41,7 @@ def add_BDS_OPT_CHAIN(ticker_cell, type_cell, date_override_cell):
 
 
 def add_BDP_fuction(security_cell, field_cell):
-    ''''
+	 ''''
     Creates a string representing the Bloomberg BDP function to be used in an excel worksheet.
     The two arguments can either be cell references or strings with valid excel BDP function arguments
     '''
