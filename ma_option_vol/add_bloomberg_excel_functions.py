@@ -41,18 +41,6 @@ def add_BDS_OPT_CHAIN(ticker_cell, type_cell, date_override_cell):
 
 
 def add_BDP_fuction(security_cell, field_cell):
-<<<<<<< HEAD
-    '''
-    Creates the string version of the Bloomberg BDP function to be used in an excel worksheet
-    the security_cell, and field_cell can either be cell references or strings
-    '''
-    if len(security_cell) and len(field_cell) > 2:
-        BDP = '=BDP("{}",CONCATENATE("{}"))'.format(security_cell, field_cell)
-    elif len(security_cell) > 2: 
-        BDP = '=BDP("{}",CONCATENATE({}))'.format(security_cell, field_cell)
-    elif len(field_cell) > 2:
-        BDP = '=BDP({},CONCATENATE("{}""))'.format(security_cell, field_cell) 
-=======
     ''''
     Creates a string representing the Bloomberg BDP function to be used in an excel worksheet.
     The two arguments can either be cell references or strings with valid excel BDP function arguments
@@ -71,7 +59,6 @@ def add_BDP_fuction(security_cell, field_cell):
     elif re.match(cell_ref, field_cell):
         BDP = '=BDP("{}",{})'.format(security_cell, field_cell)
     #if neither the security_cell nor the field_cell is a cell reference
->>>>>>> excel
     else:
         BDP = '=BDP("{}","{}")'.format(security_cell, field_cell)
     #return the BDP string
