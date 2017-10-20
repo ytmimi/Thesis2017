@@ -111,7 +111,10 @@ def format_option_description(security_name, option_description):
     expiration_date = dt.datetime.strptime(description_list[2],'%m/%d/%y').date()
 
     #description_list[-1][1:] = '18', and converts the string to an int
-    strike_price = int(description_list[-1][1:])
+    try:
+        strike_price = int(description_list[-1][1:])
+    except:
+        strike_price = float(description_list[-1][1:])
 
     option_data_list = [security_name, option_description, option_type, expiration_date, strike_price]
 
@@ -250,12 +253,11 @@ def group_contracts_by_strike(workbook_path):
         #if the contract is a put set the default value, create a new key for the contract if it
         #doesn't already exist, increase the count by 1, and append the contract to the appropriate list
         elif re.match(put, contract_type):
-            options_contractsoptions_contracts.setdefault('put',{'count':0})
+            options_contracts.setdefault('put',{'count':0})
             options_contracts['put'].setdefault(contract_type, [])
             options_contracts['put']['count'] += 1
             options_contracts['put'][contract_type].append(contract)
 
-    print('Done grouping options contracts.')
     #finally return the options_contracts dictionary
     return options_contracts
 
