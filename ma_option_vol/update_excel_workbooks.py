@@ -20,6 +20,7 @@ def update_sheet_with_BDP_description(workbook_path, sheet_name):
     #saves the workbook
     wb.save(workbook_path)
 
+
 def update_option_contract_sheets(workbook_path, sheet_name, sheet_end_date_cell):
     '''
     Creates new sheets in the given excel workbook based on Option data stored in the given sheet.
@@ -59,7 +60,7 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_end_date_cell
 
         #if the expiration_date occurs 2 months after the completion_date, then stop creating sheets
         if date_diff >= 60:
-            print('Found contracts past {}. Saving the workbook with {} new tabs'.format(completion_date, index-1))
+            print('Found contracts past {}. Saving the workbook with {} new tabs'.format(completion_date, index))
             wb.save(workbook_path)
             break
 
@@ -79,12 +80,12 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_end_date_cell
                 new_sheet.cell(row = 8,column = index ).value = value 
 
             #add the BDH formula to cell B9
-            # new_sheet['B9'] = abxl.add_option_BDH(  security_name = 'B1',
-            #                                         fields = 'C8:H8', 
-            #                                         start_date = "'Options Chain'!B4",
-            #                                         end_date = "'Options Chain'!B6",
-            #                                         optional_arg = ['Days', 'Fill'],
-            #                                         optional_val = ['W',  '0'])
+            new_sheet['B9'] = abxl.add_option_BDH(  security_name = 'B1',
+                                                    fields = 'C8:H8', 
+                                                    start_date = "'Options Chain'!B4",
+                                                    end_date = "'Options Chain'!B6",
+                                                    optional_arg = ['Days', 'Fill'],
+                                                    optional_val = ['W',  '0'])
 
     #if the loop ends without finding contracts 2 months past the completion/termination date, save the workbook      
     wb.save(workbook_path)  
@@ -163,9 +164,13 @@ def update_read_data_only(file_path):
 
 def delet_workbook_sheets(workbook_path):
     wb = openpyxl.load_workbook(workbook_path)
+    start_sheet_num = len(wb.get_sheet_names())
     for (index,sheet) in enumerate(wb.get_sheet_names()):
         if index > 0:
             wb.remove_sheet(wb.get_sheet_by_name(sheet))
+    end_sheet_num = len(wb.get_sheet_names())
+    deleted_sheet_num = start_sheet_num - end_sheet_num 
+    print('Deleted {} sheets from the Workbook'.format(deleted_sheet_num))
     wb.save(workbook_path)
 
 
