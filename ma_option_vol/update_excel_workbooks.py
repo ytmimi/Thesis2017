@@ -111,7 +111,7 @@ def format_option_description(security_name, option_description):
     expiration_date = dt.datetime.strptime(description_list[2],'%m/%d/%y').date()
 
     #description_list[-1][1:] = '18', and converts the string to an int
-    strike_price = description_list[-1][1:]
+    strike_price = int(description_list[-1][1:])
 
     option_data_list = [security_name, option_description, option_type, expiration_date, strike_price]
 
@@ -166,9 +166,11 @@ def update_read_data_only(file_path):
 def delet_workbook_sheets(workbook_path):
     wb = openpyxl.load_workbook(workbook_path)
     start_sheet_num = len(wb.get_sheet_names())
-    for (index,sheet) in enumerate(wb.get_sheet_names()):
-        if index > 0:
-            wb.remove_sheet(wb.get_sheet_by_name(sheet))
+    #if there is more than one sheet in the workook
+    if start_sheet_num > 1:
+        #loop through every sheet name in the workbook excep the first sheet
+        for (index,sheet) in enumerate(wb.get_sheet_names()[1:]):
+                wb.remove_sheet(wb.get_sheet_by_name(sheet))
     end_sheet_num = len(wb.get_sheet_names())
     deleted_sheet_num = start_sheet_num - end_sheet_num 
     print('Deleted {} sheets from the Workbook'.format(deleted_sheet_num))
