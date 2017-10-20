@@ -1,5 +1,6 @@
 import openpyxl
 import datetime as dt
+import re
 import add_bloomberg_excel_functions as abxl
 
 def update_sheet_with_BDP_description(workbook_path, sheet_name):
@@ -80,12 +81,12 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_end_date_cell
                 new_sheet.cell(row = 8,column = index ).value = value 
 
             #add the BDH formula to cell B9
-            new_sheet['B9'] = abxl.add_option_BDH(  security_name = 'B1',
-                                                    fields = 'C8:H8', 
-                                                    start_date = "'Options Chain'!B4",
-                                                    end_date = "'Options Chain'!B6",
-                                                    optional_arg = ['Days', 'Fill'],
-                                                    optional_val = ['W',  '0'])
+            # new_sheet['B9'] = abxl.add_option_BDH(  security_name = 'B1',
+            #                                         fields = 'C8:H8', 
+            #                                         start_date = "'Options Chain'!B4",
+            #                                         end_date = "'Options Chain'!B6",
+            #                                         optional_arg = ['Days', 'Fill'],
+            #                                         optional_val = ['W',  '0'])
 
     #if the loop ends without finding contracts 2 months past the completion/termination date, save the workbook      
     wb.save(workbook_path)  
@@ -213,12 +214,48 @@ def update_Stock_price_sheet():
     pass
 
 
-def group_contracts_by_strike():
+def group_contracts_by_strike(workbook_path):
     '''
     Given a workbook with many option contracs, those that have the same strike price are grouped together
+    Returns a dictionary
     '''
-    pass
+    #regular expression to determin if the contract is a put or a call
+    call = re.compile(r'[C]\d+')
+    put = re.compile(r'[P]\d+')
     
+    #a dictionary to store the sorted data
+    options_contracts = {}
+
+    #given the workbook_path a new excel workbook is loaded
+    wb = openpyxl.load_workbook(workbook_path)
+    #exclude the first sheet because that isn't an options contract
+    contract_list = wb.get_sheet_names()[1:]
+
+    #loop through each contract sheet:
+    for (index, contract) in enumerate(contract_list):
+        #split the sheet name by whitespace and take only the last item in the list
+        #the last item will either look similar to 'C(some numbers)' or 'P(some numbers)'
+        contract_type = contract.split(' ')[-1]
+        
+        #if the contract is a call set the default value, create a new key for the contract if it
+        #doesn't already exist, increase the count by 1, and append the contract to the appropriate list 
+        if re.match(call, contract_type):
+            options_contracts.setdefault('call',{'count':0})
+            options_contracts['call'].setdefault(contract_type, [])
+            options_contracts['call']['count'] += 1
+            options_contracts['call'][contract_type].append(contract)
+
+        #if the contract is a put set the default value, create a new key for the contract if it
+        #doesn't already exist, increase the count by 1, and append the contract to the appropriate list
+        elif re.match(put, contract_type):
+            options_contractsoptions_contracts.setdefault('put',{'count':0})
+            options_contracts['put'].setdefault(contract_type, [])
+            options_contracts['put']['count'] += 1
+            options_contracts['put'][contract_type].append(contract)
+
+    print('Done grouping options contracts.')
+    #finally return the options_contracts dictionary
+    return options_contracts
 
 
 
