@@ -204,7 +204,20 @@ def find_index_0(worksheet,start, end, date_0):
             average_index = int((end_index + start_index)/2)
   
     return average_index
-    
+
+
+def update_Stock_price_sheet():
+    '''
+    Adds a sheet with stock price information to the workbook
+    '''
+    pass
+
+
+def group_contracts_by_strike():
+    '''
+    Given a workbook with many option contracs, those that have the same strike price are grouped together
+    '''
+    pass
     
 
 
