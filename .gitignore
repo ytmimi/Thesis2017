@@ -1,6 +1,6 @@
 /dist
 *.egg-info/
 *__pycache__
-test/*
+test_path.py
 company_data/acquirer
 company_data/target
