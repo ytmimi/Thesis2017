@@ -3,10 +3,10 @@ import os
 import re
 
 
-def group_contracts_by_strike(workbook_path):
+def group_contracts_by_strike(wb):
     '''
-    Given a workbook with many option contracs, those that have the same strike price are grouped together
-    Returns a dictionary with keys representing the strike and type of the option
+    Given a workbook with many option contracs, those that have the same strike price are grouped together.
+    Returns a dictionary with keys representing the strike and type of the option (call or put)
     '''
     #regular expression to determin if the contract is a put or a call
     call = re.compile(r'[C]\d+')
@@ -15,8 +15,6 @@ def group_contracts_by_strike(workbook_path):
     #a dictionary to store the sorted data
     options_contracts = {}
 
-    #given the workbook_path a new excel workbook is loaded
-    wb = openpyxl.load_workbook(workbook_path)
     #exclude the first sheet because that isn't an options contract
     contract_list = wb.get_sheet_names()[1:]
 
@@ -29,17 +27,15 @@ def group_contracts_by_strike(workbook_path):
         #if the contract is a call set the default value, create a new key for the contract if it
         #doesn't already exist, increase the count by 1, and append the contract to the appropriate list 
         if re.match(call, contract_type):
-            options_contracts.setdefault('call',{'count':0})
+            options_contracts.setdefault('call',{})
             options_contracts['call'].setdefault(contract_type, [])
-            options_contracts['call']['count'] += 1
             options_contracts['call'][contract_type].append(contract)
 
         #if the contract is a put set the default value, create a new key for the contract if it
         #doesn't already exist, increase the count by 1, and append the contract to the appropriate list
         elif re.match(put, contract_type):
-            options_contracts.setdefault('put',{'count':0})
+            options_contracts.setdefault('put',{})
             options_contracts['put'].setdefault(contract_type, [])
-            options_contracts['put']['count'] += 1
             options_contracts['put'][contract_type].append(contract)
 
     #finally return the options_contracts dictionary
@@ -48,6 +44,8 @@ def group_contracts_by_strike(workbook_path):
 
 def create_sorted_sheet(new_workbook, reference_wb, new_sheet_title, reference_sheet_list, data_start_row, data_column, index_column):
     '''
+    Given the following arguments, a new worksheet is created in the new workbook, with sorted data taken from worksheets of the reference_wb
+
     new_workbook          should be a new openpyxl Workbook where the data will be stored
     
     reference_wb          should be an openpyxl.workbook.Workbook containig the sheets contined in reference_sheet_list
@@ -71,14 +69,20 @@ def create_sorted_sheet(new_workbook, reference_wb, new_sheet_title, reference_s
     
     '''
     #creates a new sheet where the combined data will be stored and names it based on the passed in new_sheet_title argument
-    #If there are already worksheets in the workbook create a new sheet
-    if len(new_workbook.get_sheet_names()) > 1:
-        new_sheet = new_workbook.create_sheet(title = new_sheet_title )
-    #If the default sheet is the only sheet in the workbook, then get it and change its name to the passed in new_sheet_title argument
-    else:
+    #If the only sheet is the default 'Sheet', then rename it to the desired new_sheet_title,
+    if new_workbook.get_sheet_names()[0] == 'Sheet':
         new_sheet = new_workbook.get_active_sheet()
-        new_sheet.title = new_sheet_title
+        new_sheet.title = new_sheet_title 
+    #else create an entirely new sheet and give it the apporpiate new_sheet_title
+    else:
+         new_sheet = new_workbook.create_sheet(title = new_sheet_title )
+        
     
+    #formats the data_column, and index_column in case they were imput as letters.
+    data_column = convert_to_numbers(data_column)
+    index_column = convert_to_numbers(index_column)
+
+
     #iterate over all the sheets in the reference_wb that were passed in reference_sheet_list
     for (index,contract) in enumerate(reference_sheet_list):  
         #if its the first iteration, update the sheet with the index_colum and the data_column
@@ -113,7 +117,7 @@ def create_sorted_sheet(new_workbook, reference_wb, new_sheet_title, reference_s
         #else: just grab the data_column    
         else:
             #load in the new worksheet.
-            data_sheet = wb.get_sheet_by_name(contract)
+            data_sheet = reference_wb.get_sheet_by_name(contract)
             
             #get the max rows of the loaded worksheet
             max_row = data_sheet.max_row
@@ -133,25 +137,112 @@ def create_sorted_sheet(new_workbook, reference_wb, new_sheet_title, reference_s
                     new_sheet.cell(row=i, column=max_col+1).value = data_sheet.cell(row= i, column= column_num).value
 
 
+def convert_to_numbers(lst):
+    for (index, value) in enumerate(lst):
+        if type(value) == str:
+            lst[index] = openpyxl.utils.column_index_from_string(value)
+    return lst
 
-#work on this
-def save_new_workbook(new_workbook,workbook_path, file_name, file_extension):
-        #checks to see if the given workbook_path exists
 
 
 
-        if os.path.exists(workbook_path):
-            #joins the path with the file Name 'file_name.file_extension', replacing / with _ to create valid excel file names
-            final_path = '/'.join([workbook_path,'{}.{}'.format(file_name.replace('/','_'), file_extension)])
-            #save the worksheet
-            new_workbook.save(final_path)    
-        else:
-            #if the path doesn't exist, create it
-            os.makedirs(workbook_path, exist_ok=False)
-            print('Generating file path: {}'.format(workbook_path))
-            final_path = '/'.join([workbook_path,'{}.{}'.format(file_name.replace('/','_'), file_extension)])
-            #save the worksheet
-            new_workbook.save(final_path)
+def create_sorted_workbooks(reference_wb_path, data_start_row, data_column, index_column):
+    '''
+    Creates a new workbook, containing sorted data in each of its sheets
+
+    reference_wb_path   should be the path to the workbook that data will be taken from
+
+    data_start_row      is a variable that will be passed to the call of create_sorted_sheet()
+
+    data_column         is a variable that will be passed to the call of create_sorted_sheet()
+
+    index_column        is a variable that will be passed to the call of create_sorted_sheet()
+    '''
+    #loads the reference workbook
+    reference_wb = openpyxl.load_workbook(reference_wb_path)
+
+    #creats the new workbooks.
+    new_call_wb = openpyxl.Workbook()
+    new_put_wb = openpyxl.Workbook()
+
+    #stores the outpuf of group_contracts_by_strike(), which is a nested dictionary that looks similar to:
+    #{ {'call':{'C55':['List of contract sheets'], ....}, {'put':{'P55':['List of contract sheets']} } } }
+    contracts = group_contracts_by_strike(wb = reference_wb)
+
+    #iterate over all the keys in the 'call' dictionary stored in contracts 
+    for (index, key) in enumerate(contracts['call']):
+        #create a sorted sheet in the new workbook for every strike price
+        create_sorted_sheet(new_workbook =new_call_wb,
+                            reference_wb= reference_wb,
+                            new_sheet_title= key,
+                            reference_sheet_list=contracts['call'][key],
+                            data_start_row= data_start_row,
+                            data_column= data_column,
+                            index_column= index_column)
+
+    #iterate over all the keys in the 'put' dictionary stored in contracts 
+    for (index, key) in enumerate(contracts['put']):
+        #create a sorted sheet in the new workbook for every strike price
+        create_sorted_sheet(new_workbook =new_put_wb,
+                            reference_wb= reference_wb,
+                            new_sheet_title= key,
+                            reference_sheet_list=contracts['put'][key],
+                            data_start_row= data_start_row,
+                            data_column= data_column,
+                            index_column= index_column)
+
+    #save new_call_wb
+    save_new_workbook(new_workbook=new_call_wb,
+                      workbook_path= reference_wb_path,
+                      new_folder='call',
+                      append_file_name='call')
+
+
+    #save new_put_wb
+    save_new_workbook(new_workbook= new_put_wb,
+                      workbook_path= reference_wb_path,
+                      new_folder= 'put',
+                      append_file_name='put')
+
+
+def save_new_workbook(new_workbook,workbook_path,new_folder,append_file_name):
+    '''
+    Saves the new file into a newly created folder at the end of the current path file path, 
+    and appends the file name.
+    '''
+    #breakes the path into a list split by '/'
+    path_list = workbook_path.split('/')
+
+    #the last item in the split_path is removed and returned from pop().
+    #By defualt pop removes and returns the last item, but it is explicilty removed below.
+    #the file name is the last item, and we split that by the '.' yeilding a new list in the form ['file_name','file_extension']
+    split_file_name = path_list.pop(-1).split('.')
+    
+    #creates a new file name from the existing name, and the new_folder's value
+    new_file_name = '{}_{}'.format(split_file_name[0], append_file_name)
+
+    #appends the name of the new folder to the end of the path
+    path_list.append(new_folder)
+
+    #takes the list and converts it to a string representing the new path.
+    new_path ='/'.join(path_list)
+
+    
+    #checks to see if the given new_path exists
+    if os.path.exists(new_path):
+        #formats the new file_path with the variables created above
+        final_path = '{}/{}.{}'.format(new_path,new_file_name,split_file_name[-1])
+        #save the workbook
+        new_workbook.save(final_path)
+        print('Saving {}.{}'.format(new_file_name,split_file_name[-1]))    
+    else:
+        #if the path doesn't exist, create it
+        os.makedirs(new_path, exist_ok=False)
+        print('Generating file path: {}'.format(new_path))
+        final_path = '{}/{}.{}'.format(new_path,new_file_name,split_file_name[-1])
+        #save the workbook
+        new_workbook.save(final_path)
+        print('Saving {}.{}'.format(new_file_name,split_file_name[-1]))
 
 
 
