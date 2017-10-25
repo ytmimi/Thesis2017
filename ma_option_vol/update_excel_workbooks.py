@@ -22,24 +22,38 @@ def update_sheet_with_BDP_description(workbook_path, sheet_name):
     wb.save(workbook_path)
 
 
-def update_option_contract_sheets(workbook_path, sheet_name, sheet_end_date_cell):
+def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_cell, sheet_end_date_cell,  data_header_row, data_table_index, data_table_header, BDH_optional_arg=None, BDH_optional_val=None):
     '''
-    Creates new sheets in the given excel workbook based on Option data stored in the given sheet.
+    Creates new sheets in the given excel workbook based on Option data stored in the given sheet_name.
+
+    workbook_path       the full file_path to the specified workbook
+
+    sheet_name          Specify the sheet_name that data will be referenced from
+
+    sheet_start_date_cell Give the coordinates of the cell in 
+
+    sheet_end_date_cell Specify the coordinates of the the cell in the specified sheet that contains the end date
     '''
+    #combine data_table_index and data_table_header
+    total_data_headers = data_table_index+data_table_header
+
+
     #data labels to be added to the new excel worksheet
     option_data_labels = ['Security Name', 'Description', 'Type', 'Expiration Date', 'Strike Price']
-
-    #headers for the datatable to be added to the new worksheet
-    data_table_header = ['INDEX','DATE','PX_LAST','PX_BID','PX_ASK','PX_VOLUME','OPEN_INT', 'IVOL']
-
+    
     #given the file path, an excel workbook is loaded.
     wb = openpyxl.load_workbook(workbook_path)
     
     #The sheet we want to get data from is set to the variable sheet
     data_sheet = wb.get_sheet_by_name(sheet_name)
     
+
     #The cell in the sheet that contains the completion/termination date, as passed in by the function.
-    completion_date= data_sheet[sheet_end_date_cell].value.date()
+    if type(data_sheet[sheet_end_date_cell].value) == int:
+        completion_date = dt.datetime.strptime(str(data_sheet[sheet_end_date_cell].value),'%Y%m%d').date()
+    
+    else:
+        completion_date= data_sheet[sheet_end_date_cell].value.date()
 
     total_rows = data_sheet.max_row
     #iterate through the rows of the data_sheet
@@ -76,17 +90,17 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_end_date_cell
             for data in zip(option_data_labels,option_data):
                 new_sheet.append(data)
 
-            #loop through every value of the data_table_header and add it to the worksheet A8:H8
-            for index, value in enumerate(data_table_header, start= 1) :
-                new_sheet.cell(row = 8,column = index ).value = value 
+            #loop through every value of total_data_headers and add it to the worksheet at the specified data_header_row
+            for (index, value) in enumerate(total_data_headers, start= 1) :
+                new_sheet.cell(row = data_header_row,column = index ).value = value 
 
-            #add the BDH formula to cell B9
-            # new_sheet['B9'] = abxl.add_option_BDH(  security_name = 'B1',
-            #                                         fields = 'C8:H8', 
-            #                                         start_date = "'Options Chain'!B4",
-            #                                         end_date = "'Options Chain'!B6",
-            #                                         optional_arg = ['Days', 'Fill'],
-            #                                         optional_val = ['W',  '0'])
+            #add the BDH formula to the sheet
+            new_sheet['B{}'.format(data_header_row+1)] = abxl.add_option_BDH( security_name = option_data[0],
+                                                                              fields = data_table_header, 
+                                                                              start_date = data_sheet[sheet_start_date_cell].value,
+                                                                              end_date = data_sheet[sheet_end_date_cell].value,
+                                                                              optional_arg = BDH_optional_arg,
+                                                                              optional_val = BDH_optional_arg)
 
     #if the loop ends without finding contracts 2 months past the completion/termination date, save the workbook      
     wb.save(workbook_path)  
