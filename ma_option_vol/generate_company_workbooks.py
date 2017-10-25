@@ -65,7 +65,8 @@ class Create_Company_Workbooks():
         target_sheet['A10'] = abxl.add_BDS_OPT_CHAIN(ticker_cell='B2',type_cell='B3', date_override_cell='B7')
         
         self.save_new_workbook( new_workbook= wb_target, workbook_path= target_path, 
-                                file_name= row_data[3].value, file_extension= 'xlsx')        
+                                file_name= row_data[3].value, start_date_str= str(row_data[1].value.date()),
+                                file_extension= 'xlsx')        
        
 
     def new_acquirer_workbook(self,row_data, acquirer_path):
@@ -100,21 +101,23 @@ class Create_Company_Workbooks():
         
         #saves the workbook
         self.save_new_workbook( new_workbook= wb_acquirer, workbook_path= acquirer_path,
-                                file_name= row_data[6].value, file_extension= 'xlsx')
+                                file_name= row_data[6].value, start_date_str=str(row_data[1].value.date()),
+                                file_extension= 'xlsx')
 
 
-    def save_new_workbook(self,new_workbook,workbook_path, file_name, file_extension):
+    def save_new_workbook(self,new_workbook,workbook_path, file_name, start_date_str, file_extension):
         #checks to see if the given workbook_path exists
         if os.path.exists(workbook_path):
-            #joins the path with the file Name 'file_name.file_extension', replacing / with _ to create valid excel file names
-            final_path = '/'.join([workbook_path,'{}.{}'.format(file_name.replace('/','_'), file_extension)])
+            #joins the path with the file Name 'file_name_start_date.file_extension', replacing / with _ to create valid excel file names
+            final_path = '/'.join([workbook_path,'{}_{}.{}'.format(file_name.replace('/','_'),start_date_str , file_extension)])
             #save the worksheet
             new_workbook.save(final_path)    
         else:
             #if the path doesn't exist, create it
             os.makedirs(workbook_path, exist_ok=False)
             print('Generating file path: {}'.format(workbook_path))
-            final_path = '/'.join([workbook_path,'{}.{}'.format(file_name.replace('/','_'), file_extension)])
+            #joins the path with the file Name 'file_name_start_date.file_extension', replacing / with _ to create valid excel file names
+            final_path = '/'.join([workbook_path,'{}_{}.{}'.format(file_name.replace('/','_'),start_date_str , file_extension)])
             #save the worksheet
             new_workbook.save(final_path)
 
