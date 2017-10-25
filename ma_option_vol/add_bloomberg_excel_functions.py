@@ -111,8 +111,11 @@ def add_option_BDH(security_name, fields, start_date, end_date, optional_arg = N
     elif type(fields) == str:
         FIELDS = '"{}"'.format(fields)
 
+    #checks if the start_data is an integer
+    if type(start_date) == int:
+    	START_DATE = '"{}"'.format(start_date)
     #checks if the start_date is a cell reference or a cell reference from another sheet
-    if re.match(cell_ref, start_date) or re.match(sheet_cell_reference, start_date):
+    elif re.match(cell_ref, start_date) or re.match(sheet_cell_reference, start_date):
         START_DATE = start_date
     #checks if the other input isn't true, check if the date was formated correctly
     elif re.match(formated_date, start_date):
@@ -120,8 +123,11 @@ def add_option_BDH(security_name, fields, start_date, end_date, optional_arg = N
     else:
         return 'Error: start_date not formated correctly'
 
+    #checks if the end_data is an integer
+    if type(start_date) == int:
+    	END_DATE = '"{}"'.format(end_date)
     #checks if the end_date is a cell reference or a cell reference from another sheet
-    if re.match(cell_ref, end_date) or re.match(sheet_cell_reference, start_date):
+    elif re.match(cell_ref, end_date) or re.match(sheet_cell_reference, start_date):
         END_DATE = end_date
     #checks if the other input isn't true, check if the date was formated correctly    
     elif re.match(formated_date, end_date):
