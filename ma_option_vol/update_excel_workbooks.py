@@ -219,3 +219,105 @@ def update_Stock_price_sheet():
     pass
 
 
+def update_workbook_average_column(reference_wb_path, column_header, header_row, data_start_row):
+    '''
+    Given the path to an excel workbook, Averages are calculated for each sheet of data
+    '''
+    #loads an excel workbook from the given file_path
+    reference_wb = openpyxl.load_workbook(reference_wb_path)
+
+    #returns a dictionary of 'sheet_names':[column data indexes] for each sheet of the given workbook
+    sheet_data_columns =find_column_index_by_header(reference_wb= reference_wb, column_header= column_header, header_row= header_row)
+
+    #iterate over each key(sheet_name) in sheet_data_columns:
+    for (index,key) in enumerate(sheet_data_columns):
+        #update the given sheet with the average column
+        update_sheet_average_column(reference_wb= reference_wb, 
+                                    sheet_name= key,
+                                    data_columns= sheet_data_columns[key],
+                                    data_start_row= data_start_row,
+                                    column_header= column_header)
+
+    #saves the excel workbook
+    reference_wb.save(reference_wb_path)
+    print('Saving Workbook...')
+
+
+def update_sheet_average_column(reference_wb,sheet_name,data_columns, data_start_row, column_header):
+    '''
+    Given an excel worksheet, and a specified list of columns, averages are calcualted for each row of the data
+    '''
+    #loads the sheet of the reference_wb
+    sheet = reference_wb.get_sheet_by_name(sheet_name)
+
+    #gets the max row of the sheet 
+    max_row = sheet.max_row
+
+    #gets the max column of the sheet
+    max_col = sheet.max_column
+    
+    #sets the header for the average column to the average_col_header and places it one row above the data
+    sheet.cell(row=data_start_row-1, column=max_col+1).value = '{} {} {}'.format(sheet_name, 'Average', column_header)
+
+    #iterate over each row of the workbook:
+    for i in range(data_start_row,max_row+1):
+        #an empty lest to store the values for the cells of the given row
+        cell_values = []
+        #iterate over each cell in the data column
+        for (index, column_ref) in enumerate(data_columns):
+            #if the value of the cell isn't 0, append it to the cell_values list
+            if sheet.cell(row=i, column=column_ref).value != 0:
+                cell_values.append(sheet.cell(row=i, column=column_ref).value)
+
+        #assing the value of the average column
+        #if the cell_values list is an empyt list
+        if cell_values == []:
+            #set the value of the cell to 0
+            sheet.cell(row=i, column=max_col+1).value = 0
+        #else cell_values is populated
+        else:
+            #set the value of the average column to the valued returned by average_from_list()
+            sheet.cell(row=i, column=max_col+1).value = average_from_list(cell_values)
+
+
+def find_column_index_by_header(reference_wb, column_header, header_row):
+    '''
+    Given a reference Wb, an average is calculated for the non zero cells of a specified column
+    '''
+    #an empty dictionary that will store the sheet_name as the key, and a list of data_columns as the key's value 
+    data_columns_by_sheet= {}
+
+    #iterate over all the sheetnames in the workbook
+    for (index,sheet_name) in enumerate(reference_wb.get_sheet_names()):
+        #load the given worksheet.
+        sheet = reference_wb.get_sheet_by_name(sheet_name)
+
+        #get the max_column for the worksheet:
+        max_col =sheet.max_column
+
+        #add a key in the dictionary for the given sheet
+        data_columns_by_sheet.setdefault(sheet_name, [])
+
+        #loop through all the cells in the header_row
+        for i in range(max_col+1):
+            #If the value in the column header matches the header_value we're searching for, then append the column index to the key's list:
+            if  column_header == sheet.cell(row=header_row, column=i+1).value:
+                data_columns_by_sheet[sheet_name].append(i+1)
+
+    #return the dictionary with the data for each sheet
+    return data_columns_by_sheet
+
+
+def average_from_list(lst):
+    '''
+    Given a list, an average is computed for all the numbers in the list
+    '''
+    total = 0
+    for index, num in enumerate(lst):
+        total+= num
+
+    return (total/ len(lst))
+
+
+
+
