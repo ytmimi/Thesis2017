@@ -176,6 +176,9 @@ def update_sheet_index(sheet_name, date, start_row):
 
 
 def update_read_data_only(file_path):
+    '''
+    Opens an Excel workbook in read_only mode, removing links to function calls and keeps just the data stored in each cell.
+    '''
     wb=openpyxl.load_workbook(file_path, data_only = True)
     wb.save(file_path)
 
