@@ -65,7 +65,7 @@ def create_sorted_sheet(new_workbook, reference_wb, new_sheet_title, reference_s
     
     index_column          should be a list of numbers, where 1=column A, 2=column B, 3=column C, and so on.
                           specifies which columns from the reference_sheet_list[0], you want to use as your index's
-                          NOTE: For accurate indexing, each sheet of data should have the same index
+                          NOTE: For accurate indexing, each sheet of data referenced should have the same index
     
     '''
     #creates a new sheet where the combined data will be stored and names it based on the passed in new_sheet_title argument
@@ -243,7 +243,7 @@ def save_new_workbook(new_workbook,workbook_path,new_folder,append_file_name):
         #save the workbook
         new_workbook.save(final_path)
         print('Saving {}.{}'.format(new_file_name,split_file_name[-1]))
-
+ 
 
 
 
