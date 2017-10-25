@@ -1,68 +1,68 @@
 #import regula exprssions library to help with finding patterns for the function arguments
 import re
 
+def add_BDS_OPT_CHAIN (ticker_cell, type_cell, date_override_cell):
 
-def add_BDS_OPT_CHAIN(ticker_cell, type_cell, date_override_cell):
-    '''
-    Creates a string representing the Bloomberg BDS function for options chains to be inserted into an excel worksheet.
-    Note: the document needs to be opened in order for the formulas to be calculated
-    '''
-    #A cell reference follows the pattern 1 or more letters followed by 1 or more numbers.
-    #the variable cell_ref is a regualr expression representing the above pattern
-    cell_ref = re.compile(r'[A-Z]+\d+$')
-    
-    OPT_CHAIN = '"OPT_CHAIN"'
-    OPTION_CHAIN_OVERRIDE = '"OPTION_CHAIN_OVERRIDE","M"'
-     
-    #checks if the function arguments are cell references or other strings. A string needs to be wrapped in " "
-    if re.match(cell_ref, ticker_cell):
-        TICKER ='{}'.format(ticker_cell)
-    else:
-        TICKER = '"{}"'.format(ticker_cell)
-    
-    if re.match(cell_ref, type_cell):
-        TYPE = '{}'.format(type_cell)
-    else:
-        TYPE = '"{}"'.format(type_cell)
-        
-    if re.match(cell_ref, date_override_cell):
-        SINGLE_DATE_OVERRIDE = '{}'.format(date_override_cell)        
-    else:
-        SINGLE_DATE_OVERRIDE = '"{}"'.format(date_override_cell)
-    
-    #formating the output of the function
-    date_concat= 'CONCATENATE("SINGLE_DATE_OVERRIDE=",{})'.format(SINGLE_DATE_OVERRIDE)
-    security_concat ='CONCATENATE({}, " ", {})'.format(TICKER, TYPE)
-    #formated BDS function
-    BDS = '=BDS({},{},{},{})'.format(security_concat,OPT_CHAIN,OPTION_CHAIN_OVERRIDE,date_concat)
-    
-    #return the BDS string
-    return BDS
+	'''
+	Creates a string representing the Bloomberg BDS function for options chains to be inserted into an excel worksheet.
+	Note: the document needs to be opened in order for the formulas to be calculated
+	'''
+	#A cell reference follows the pattern 1 or more letters followed by 1 or more numbers.
+	#the variable cell_ref is a regualr expression representing the above pattern
+
+	cell_ref =re.compile(r'[A-Z]+\d+$')
+	OPT_CHAIN = '"OPT_CHAIN"'
+	OPTION_CHAIN_OVERRIDE = '"OPTION_CHAIN_OVERRIDE","M"'
+	 
+	#checks if the function arguments are cell references or other strings. A string needs to be wrapped in " "
+	if re.match(cell_ref, ticker_cell):
+	    TICKER ='{}'.format(ticker_cell)
+	else:
+	    TICKER = '"{}"'.format(ticker_cell)
+
+	if re.match(cell_ref, type_cell):
+	    TYPE = '{}'.format(type_cell)
+	else:
+	    TYPE = '"{}"'.format(type_cell)
+	    
+	if re.match(cell_ref, date_override_cell):
+	    SINGLE_DATE_OVERRIDE = '{}'.format(date_override_cell)        
+	else:
+	    SINGLE_DATE_OVERRIDE = '"{}"'.format(date_override_cell)
+
+	#formating the output of the function
+	date_concat= 'CONCATENATE("SINGLE_DATE_OVERRIDE=",{})'.format(SINGLE_DATE_OVERRIDE)
+	security_concat ='CONCATENATE({}, " ", {})'.format(TICKER, TYPE)
+	#formated BDS function
+	BDS = '=BDS({},{},{},{})'.format(security_concat,OPT_CHAIN,OPTION_CHAIN_OVERRIDE,date_concat)
+
+	#return the BDS string
+	return BDS
 
 
 def add_BDP_fuction(security_cell, field_cell):
-	 ''''
-    Creates a string representing the Bloomberg BDP function to be used in an excel worksheet.
-    The two arguments can either be cell references or strings with valid excel BDP function arguments
-    '''
-    #regular expression pattern for a cell reference.
-    #The pattern is any number of of letters followed by any number of digit, and then ends
-    cell_ref = re.compile(r'[A-Z]+\d+$')
-    
-    #checks to see if both arguments are cell references or not
-    if re.match(cell_ref, security_cell) and re.match(cell_ref, field_cell): 
-        BDP = '=BDP({},{})'.format(security_cell, field_cell)
-    #if onlyt the security_cell is a cell reference
-    elif re.match(cell_ref, security_cell):
-        BDP = '=BDP({},"{}")'.format(security_cell, field_cell)
-    #if only the field_cell is a cell reference    
-    elif re.match(cell_ref, field_cell):
-        BDP = '=BDP("{}",{})'.format(security_cell, field_cell)
-    #if neither the security_cell nor the field_cell is a cell reference
-    else:
-        BDP = '=BDP("{}","{}")'.format(security_cell, field_cell)
-    #return the BDP string
-    return BDP
+	'''
+	Creates a string representing the Bloomberg BDP function to be used in an excel worksheet.
+	The two arguments can either be cell references or strings with valid excel BDP function arguments
+	'''
+	#regular expression pattern for a cell reference.
+	#The pattern is any number of of letters followed by any number of digit, and then ends
+	cell_ref =re.compile(r'[A-Z]+\d+$')
+
+	#checks to see if both arguments are cell references or not
+	if re.match(cell_ref, security_cell) and re.match(cell_ref, field_cell): 
+	    BDP = '=BDP({},{})'.format(security_cell, field_cell)
+	#if onlyt the security_cell is a cell reference
+	elif re.match(cell_ref, security_cell):
+	    BDP = '=BDP({},"{}")'.format(security_cell, field_cell)
+	#if only the field_cell is a cell reference    
+	elif re.match(cell_ref, field_cell):
+	    BDP = '=BDP("{}",{})'.format(security_cell, field_cell)
+	#if neither the security_cell nor the field_cell is a cell reference
+	else:
+	    BDP = '=BDP("{}","{}")'.format(security_cell, field_cell)
+	#return the BDP string
+	return BDP
 
 
 def add_option_BDH(security_name, fields, start_date, end_date, optional_arg = None, optional_val=None):
@@ -101,7 +101,6 @@ def add_option_BDH(security_name, fields, start_date, end_date, optional_arg = N
     else:
         SECURITY_NAME ='"{}"'.format(security_name)
     
-    
     #checks if fields is a list
     if type(fields) == list:
         FIELDS = '"{}"'.format(', '.join(fields))
@@ -111,7 +110,6 @@ def add_option_BDH(security_name, fields, start_date, end_date, optional_arg = N
     #check if fields is a string
     elif type(fields) == str:
         FIELDS = '"{}"'.format(fields)
-    
 
     #checks if the start_date is a cell reference or a cell reference from another sheet
     if re.match(cell_ref, start_date) or re.match(sheet_cell_reference, start_date):
@@ -155,7 +153,6 @@ def add_option_BDH(security_name, fields, start_date, end_date, optional_arg = N
         elif type(optional_val) == str:
             OPTIONAL_VAL = '"{}"'.format(optional_val)
         
-
     #checks if optional_arg was given but optioinal_val wasn't
     if (optional_arg != None) and (optional_val == None):
         return 'Please provid values for {}'.format(OPTIONAL_ARG)
