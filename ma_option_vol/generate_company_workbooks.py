@@ -28,7 +28,6 @@ class Create_Company_Workbooks():
                 #creates the new workbooks
                 self.new_target_workbook(row_data=row, target_path= self.target_path)
                 self.new_acquirer_workbook(row_data=row, acquirer_path= self.acquirer_path)
-                break #<----remember to remove this after done testing
         print('\nDone creating company files.')
 
 
@@ -43,31 +42,35 @@ class Create_Company_Workbooks():
         one_year = dt.timedelta(days=360)
         start_date = row_data[1].value - one_year
         
-        #a list of data that will be added to each newly created worksheet
-        data = [['Target Name', row_data[3].value], 
-                ['Target Ticker', row_data[4].value],
-                ['Type', 'Equity'],
-                ['Start Date', start_date.date()],
-                ['Announcement Date', row_data[1].value.date()],
-                ['End Date', row_data[2].value.date()],
-                ['Formated Start Date',int(str(start_date.date()).replace('-',''))],
-                ['Formated End Date',int(str(row_data[2].value.date()).replace('-',''))]]
+        #defines a date that acts as our cut off date
+        cut_off_date = dt.datetime(2012,2,15)
+        #if the start_date is greater than the cut off date, then create a new file
+        if start_date > cut_off_date:
+            #a list of data that will be added to each newly created worksheet
+            data = [['Target Name', row_data[3].value], 
+                    ['Target Ticker', row_data[4].value],
+                    ['Type', 'Equity'],
+                    ['Start Date', start_date.date()],
+                    ['Announcement Date', row_data[1].value.date()],
+                    ['End Date', row_data[2].value.date()],
+                    ['Formated Start Date',int(str(start_date.date()).replace('-',''))],
+                    ['Formated End Date',int(str(row_data[2].value.date()).replace('-',''))]]
 
-        #creates a new Workbook
-        wb_target = openpyxl.Workbook()
-        target_sheet = wb_target.get_active_sheet()
-        target_sheet.title = 'Options Chain'
-        
-        #appends the data to the workbook        
-        for (index, cell) in enumerate(target_sheet['A1:B8']):
-            #tuple unpacking to set the cell values 
-            (cell[0].value, cell[1].value) = data[index]
-        target_sheet['A10'] = abxl.add_BDS_OPT_CHAIN(ticker_cell='B2',type_cell='B3', date_override_cell='B7')
-        
-        self.save_new_workbook( new_workbook= wb_target, workbook_path= target_path, 
-                                file_name= row_data[3].value, start_date_str= str(row_data[1].value.date()),
-                                file_extension= 'xlsx')        
-       
+            #creates a new Workbook
+            wb_target = openpyxl.Workbook()
+            target_sheet = wb_target.get_active_sheet()
+            target_sheet.title = 'Options Chain'
+            
+            #appends the data to the workbook        
+            for (index, cell) in enumerate(target_sheet['A1:B8']):
+                #tuple unpacking to set the cell values 
+                (cell[0].value, cell[1].value) = data[index]
+            target_sheet['A10'] = abxl.add_BDS_OPT_CHAIN(ticker_cell='B2',type_cell='B3', date_override_cell='B7')
+            
+            self.save_new_workbook( new_workbook= wb_target, workbook_path= target_path, 
+                                    file_name= row_data[3].value, start_date_str= str(row_data[1].value.date()),
+                                    file_extension= 'xlsx')        
+           
 
     def new_acquirer_workbook(self,row_data, acquirer_path):
         '''
@@ -79,30 +82,36 @@ class Create_Company_Workbooks():
         '''
         one_year = dt.timedelta(days=360)
         start_date = row_data[1].value - one_year
-        #a list of data that will be added to each newly created worksheet
-        data = [['Acquirer Name', row_data[6].value], 
-                ['Acquirer Ticker', row_data[7].value],
-                ['Type', 'Equity'],
-                ['Start Date', start_date.date()],
-                ['Announcement Date', row_data[1].value.date()],
-                ['End Date', row_data[2].value.date()],
-                ['Formated Start Date',str(start_date.date()).replace('-','')],
-                ['Formated End Date',str(row_data[2].value.date()).replace('-','')]]
-        #creates a new Workbook
-        wb_acquirer = openpyxl.Workbook()
-        acquirer_sheet = wb_acquirer.get_active_sheet()
-        acquirer_sheet.title = 'Options Chain'     
         
-        #appends the data to the workbook        
-        for (index, cell) in enumerate(acquirer_sheet['A1:B8']):
-            #tuple unpacking to set the cell values 
-            (cell[0].value, cell[1].value) = data[index]
-        acquirer_sheet['A10'] = abxl.add_BDS_OPT_CHAIN(ticker_cell='B2',type_cell='B3', date_override_cell='B7')
-        
-        #saves the workbook
-        self.save_new_workbook( new_workbook= wb_acquirer, workbook_path= acquirer_path,
-                                file_name= row_data[6].value, start_date_str=str(row_data[1].value.date()),
-                                file_extension= 'xlsx')
+        #defines a date that acts as our cut off date
+        cut_off_date = dt.datetime(2012,2,15)
+
+        #if the start_date is greater than the cut off date, then create a new file
+        if start_date > cut_off_date:
+            #a list of data that will be added to each newly created worksheet
+            data = [['Acquirer Name', row_data[6].value], 
+                    ['Acquirer Ticker', row_data[7].value],
+                    ['Type', 'Equity'],
+                    ['Start Date', start_date.date()],
+                    ['Announcement Date', row_data[1].value.date()],
+                    ['End Date', row_data[2].value.date()],
+                    ['Formated Start Date',str(start_date.date()).replace('-','')],
+                    ['Formated End Date',str(row_data[2].value.date()).replace('-','')]]
+            #creates a new Workbook
+            wb_acquirer = openpyxl.Workbook()
+            acquirer_sheet = wb_acquirer.get_active_sheet()
+            acquirer_sheet.title = 'Options Chain'     
+            
+            #appends the data to the workbook        
+            for (index, cell) in enumerate(acquirer_sheet['A1:B8']):
+                #tuple unpacking to set the cell values 
+                (cell[0].value, cell[1].value) = data[index]
+            acquirer_sheet['A10'] = abxl.add_BDS_OPT_CHAIN(ticker_cell='B2',type_cell='B3', date_override_cell='B7')
+            
+            #saves the workbook
+            self.save_new_workbook( new_workbook= wb_acquirer, workbook_path= acquirer_path,
+                                    file_name= row_data[6].value, start_date_str=str(row_data[1].value.date()),
+                                    file_extension= 'xlsx')
 
 
     def save_new_workbook(self,new_workbook,workbook_path, file_name, start_date_str, file_extension):
