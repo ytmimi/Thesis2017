@@ -84,11 +84,11 @@ def create_sorted_sheet(new_workbook, reference_wb, new_sheet_title, reference_s
 
 
     #iterate over all the sheets in the reference_wb that were passed in reference_sheet_list
-    for (index,contract) in enumerate(reference_sheet_list):  
+    for (index,sheet) in enumerate(reference_sheet_list):  
         #if its the first iteration, update the sheet with the index_colum and the data_column
         if index ==0:
             #load in the new worksheet.
-            data_sheet = reference_wb.get_sheet_by_name(contract)
+            data_sheet = reference_wb.get_sheet_by_name(sheet)
             
             #get the max rows of the loaded worksheet
             max_row = data_sheet.max_row
@@ -101,7 +101,7 @@ def create_sorted_sheet(new_workbook, reference_wb, new_sheet_title, reference_s
                 #if we reach the fist item in the data column set a header for the contract name
                 if column_num == data_column[0]:
                     #the header is set at the current max_col+1, which data will go under
-                    new_sheet.cell(row= data_start_row-1, column= max_col+1).value = contract
+                    new_sheet.cell(row= data_start_row-1, column= max_col+1).value = sheet
                     
                     
                 #iterate over row indexes from data_start_row to max_row+1
@@ -117,7 +117,7 @@ def create_sorted_sheet(new_workbook, reference_wb, new_sheet_title, reference_s
         #else: just grab the data_column    
         else:
             #load in the new worksheet.
-            data_sheet = reference_wb.get_sheet_by_name(contract)
+            data_sheet = reference_wb.get_sheet_by_name(sheet)
             
             #get the max rows of the loaded worksheet
             max_row = data_sheet.max_row
@@ -130,7 +130,7 @@ def create_sorted_sheet(new_workbook, reference_wb, new_sheet_title, reference_s
                 #if we reach the fist item in the data column set a header for the contract name
                 if column_num == data_column[0]:
                     #the header is set at the current max_col+1, which data will go under
-                    new_sheet.cell(row= data_start_row-1, column=max_col+1).value = contract
+                    new_sheet.cell(row= data_start_row-1, column=max_col+1).value = sheet
                 
                 #iterate over row indexes from data_start_row to max_row+1
                 for i in range(data_start_row, max_row+1):
@@ -142,7 +142,6 @@ def convert_to_numbers(lst):
         if type(value) == str:
             lst[index] = openpyxl.utils.column_index_from_string(value)
     return lst
-
 
 
 
@@ -165,7 +164,25 @@ def create_sorted_workbooks(reference_wb_path, data_start_row, data_column, inde
     new_call_wb = openpyxl.Workbook()
     new_put_wb = openpyxl.Workbook()
 
-    #stores the outpuf of group_contracts_by_strike(), which is a nested dictionary that looks similar to:
+    #adds the stock sheet to the new_call_wb.  This is called outside of the for loop
+    create_sorted_sheet(new_workbook =new_call_wb,
+                        reference_wb= reference_wb,
+                        new_sheet_title= 'Stock Price',
+                        reference_sheet_list=[reference_wb.get_sheet_names()[1]],
+                        data_start_row= data_start_row,
+                        data_column= [data_column[0]],
+                        index_column= index_column)
+
+	#adds the stock sheet to the new_put_wb.  This is called outside of the for loop
+    create_sorted_sheet(new_workbook =new_put_wb,
+                        reference_wb= reference_wb,
+                        new_sheet_title= 'Stock Price',
+                        reference_sheet_list=[reference_wb.get_sheet_names()[1]],
+                        data_start_row= data_start_row,
+                        data_column= [data_column[0]],
+                        index_column= index_column)
+
+	#stores the outpuf of group_contracts_by_strike(), which is a nested dictionary that looks similar to:
     #{ {'call':{'C55':['List of contract sheets'], ....}, {'put':{'P55':['List of contract sheets']} } } }
     contracts = group_contracts_by_strike(wb = reference_wb)
 
@@ -179,7 +196,8 @@ def create_sorted_workbooks(reference_wb_path, data_start_row, data_column, inde
                             data_start_row= data_start_row,
                             data_column= data_column,
                             index_column= index_column)
-
+    
+    
     #iterate over all the keys in the 'put' dictionary stored in contracts 
     for (index, key) in enumerate(contracts['put']):
         #create a sorted sheet in the new workbook for every strike price
@@ -190,7 +208,7 @@ def create_sorted_workbooks(reference_wb_path, data_start_row, data_column, inde
                             data_start_row= data_start_row,
                             data_column= data_column,
                             index_column= index_column)
-
+    
     #save new_call_wb
     save_new_workbook(new_workbook=new_call_wb,
                       workbook_path= reference_wb_path,

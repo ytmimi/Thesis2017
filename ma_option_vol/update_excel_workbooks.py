@@ -228,13 +228,55 @@ def find_index_0(worksheet,start, end, date_0):
   
     return average_index
 
-
-def update_Stock_price_sheet():
+####################################
+def update_stock_price_sheet(workbook_path, sheet_name, stock_sheet_index, sheet_start_date_cell, sheet_end_date_cell,  data_header_row, data_table_index, data_table_header, BDH_optional_arg=None, BDH_optional_val=None ):
     '''
     Adds a sheet with stock price information to the workbook
     '''
-    pass
 
+    #load the given workbook
+    wb = openpyxl.load_workbook(workbook_path)
+
+    #gets the reference sheet
+    reference_sheet = wb.get_sheet_by_name(sheet_name)
+    ticker = '{} {}'.format(reference_sheet['B2'].value, reference_sheet['B3'].value)
+
+    
+    #create a new sheet, and makes it the second sheet in the workbook. sheet indexing starts at 0.
+    new_sheet = wb.create_sheet(index=stock_sheet_index)
+    #sets the title of the new worksheet
+    new_sheet.title = ticker
+    #basic data to be added to the sheet
+    data = [('Company Name', reference_sheet['B1'].value),
+            ('Company Ticker',ticker),
+            ('Start Date', reference_sheet[sheet_start_date_cell].value),
+            ('End Date',reference_sheet[sheet_end_date_cell].value)]
+
+
+    #appends the data to the top of the spreadsheet
+    for (index,data_lst) in enumerate(data):
+        new_sheet.append(data_lst)
+
+
+    #combines both passed lists:
+    total_headers = data_table_index + data_table_header
+    #set the index and column headers for the worksheet
+    for (index, value) in enumerate(total_headers, start= 1):
+        new_sheet.cell(row=data_header_row,column=index).value = value
+        if value.upper() == ('DATE'):
+            #sets the BDH function into place
+            new_sheet.cell(row= data_header_row+1, column= index).value = abxl.add_option_BDH(security_name = data[1][1],
+                                                                            fields = data_table_header, 
+                                                                            start_date = reference_sheet[sheet_start_date_cell].value,
+                                                                            end_date = reference_sheet[sheet_end_date_cell].value,
+                                                                            optional_arg = BDH_optional_arg,
+                                                                            optional_val = BDH_optional_arg)
+    #saves the newly added sheet to the workbook.
+    wb.save(workbook_path)
+    print('Adding stock sheet to the Workbook...')
+
+    
+    
 
 def update_workbook_average_column(reference_wb_path, column_header, header_row, data_start_row):
     '''
