@@ -18,8 +18,19 @@ import update_excel_workbooks as uxlw
 #update_sheet with the BDP function
 #uxlw.update_sheet_with_BDP_description(workbook_path =test_path)
 
-#adds a new sheet for each option contract listed in the Options Chain sheet
-#uxlw.update_option_contract_sheets(workbook_path=test_path, sheet_name='Options Chain', sheet_end_date_cell='B6')
+#test the update_options_contract_sheets function.
+#adds a new sheet for each option contract listed in the Options Chain sheet and pulls bloomberg data for each field listed in 
+'''
+uxlw.update_option_contract_sheets(workbook_path=test_path,
+									sheet_name='Options Chain',
+									sheet_start_date_cell='B7',
+									sheet_end_date_cell='B8',
+									data_header_row=8,
+									data_table_index=['INDEX','DATE'],
+									data_table_header=['PX_LAST','PX_BID','PX_ASK','PX_VOLUME','OPEN_INT', 'IVOL'],
+									BDH_optional_arg=['Days', 'Fill'],
+									BDH_optional_val=['W','0'])
+'''
 
 #deletes all worksheets in the workbook except the first worksheet
 #uxlw.delet_workbook_sheets(test_path)
@@ -33,6 +44,20 @@ import update_excel_workbooks as uxlw
 # for index, key in enumerate(data_dict):
 # 	print(key, data_dict[key])
 
-
 #test the update_workbook_average_column() function
-uxlw.update_workbook_average_column(reference_wb_path = test_path3, column_header='PX_LAST', header_row=8, data_start_row=9)
+uxlw.update_workbook_average_column(reference_wb_path = test_path3, column_header='PX_LAST', header_row=8, data_start_row=9, ignore_sheet_list=['Stock Price'])
+
+
+#test the update_stock_price_sheet()
+'''
+uxlw.update_stock_price_sheet(	workbook_path =test_path,
+							sheet_name='Options Chain',
+							stock_sheet_index = 1,
+							sheet_start_date_cell='B7',
+							sheet_end_date_cell='B8',  
+							data_header_row=8, 
+							data_table_index=['INDEX','DATE'], 
+							data_table_header=['PX_LAST'], 
+							BDH_optional_arg=None, 
+							BDH_optional_val=None )
+'''
