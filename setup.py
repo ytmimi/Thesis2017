@@ -21,7 +21,7 @@ setup(name='ma_option_vol',
       packages=['ma_option_vol', 'company_data'],
 
       #python modules that the code needs to run properly
-      install_requires=['openpyxl'],
+      install_requires=['openpyxl','datetime','os','re'],
       
       #non python files to be included with the source distribution
       # package_data={
@@ -31,5 +31,5 @@ setup(name='ma_option_vol',
       #files stored in a directory that doesn't include an __init__.py file
       include_package_data=True,
       data_files=[('', ['LICENSE.txt','README.md']),
-                  ('company_data',['sample/*.xlsx','acquirer/','target/'])],
+                  ('company_data',['sample/*.xlsx','Treasury Rates.xlsx'])],
      )

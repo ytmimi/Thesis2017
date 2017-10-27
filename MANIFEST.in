@@ -1,5 +1,4 @@
 include README.md
 include LICENSE.txt
 include company_data/sample/*.xlsx
-include company_data/acquirer/
-include company_data/target/
+include company_data/Treasury Rates.xlsx
