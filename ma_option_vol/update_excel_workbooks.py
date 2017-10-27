@@ -209,11 +209,9 @@ def find_index_0(worksheet,start, end, date_0):
     average_index = int((end_index + start_index)/2)
     #variable for the while loop
     
-    #import pdb; pdb.set_trace()
     found = False
     while not found:
         #print(start_index, found)        
-        #import pdb; pdb.set_trace()
         curr_date = worksheet['B{}'.format(average_index)].value
         if (date_0 == curr_date):
             found = True
@@ -228,7 +226,7 @@ def find_index_0(worksheet,start, end, date_0):
   
     return average_index
 
-####################################
+
 def update_stock_price_sheet(workbook_path, sheet_name, stock_sheet_index, sheet_start_date_cell, sheet_end_date_cell,  data_header_row, data_table_index, data_table_header, BDH_optional_arg=None, BDH_optional_val=None ):
     '''
     Adds a sheet with stock price information to the workbook
@@ -278,15 +276,21 @@ def update_stock_price_sheet(workbook_path, sheet_name, stock_sheet_index, sheet
     
     
 
-def update_workbook_average_column(reference_wb_path, column_header, header_row, data_start_row):
+def update_workbook_average_column(reference_wb_path, column_header, header_row, data_start_row, ignore_sheet_list=[]):
     '''
     Given the path to an excel workbook, Averages are calculated for each sheet of data
     '''
     #loads an excel workbook from the given file_path
-    reference_wb = openpyxl.load_workbook(reference_wb_path)
-
+    reference_wb = openpyxl.load_workbook(reference_wb_path, data_only=True)
     #returns a dictionary of 'sheet_names':[column data indexes] for each sheet of the given workbook
     sheet_data_columns =find_column_index_by_header(reference_wb= reference_wb, column_header= column_header, header_row= header_row)
+
+    #removes any sheets that are ment to be ignored
+    if ignore_sheet_list != []:
+        #iterates over every sheet name passed into ignore_sheet_list
+        for index, ignore_sheet in enumerate(ignore_sheet_list):
+            #removes the sheet name from the dictionary sheet_data_columns, so that it wont be iterated over next
+            sheet_data_columns.pop(ignore_sheet)
 
     #iterate over each key(sheet_name) in sheet_data_columns:
     for (index,key) in enumerate(sheet_data_columns):
@@ -362,6 +366,10 @@ def find_column_index_by_header(reference_wb, column_header, header_row):
             #If the value in the column header matches the header_value we're searching for, then append the column index to the key's list:
             if  column_header == sheet.cell(row=header_row, column=i+1).value:
                 data_columns_by_sheet[sheet_name].append(i+1)
+
+        #if no columns were found, remove that key from the dictionary
+        if data_columns_by_sheet[sheet_name] == []:
+            data_columns_by_sheet.pop(sheet_name)
 
     #return the dictionary with the data for each sheet
     return data_columns_by_sheet
