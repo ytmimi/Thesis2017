@@ -95,8 +95,8 @@ class Create_Company_Workbooks():
                     ['Start Date', start_date.date()],
                     ['Announcement Date', row_data[1].value.date()],
                     ['End Date', row_data[2].value.date()],
-                    ['Formated Start Date',str(start_date.date()).replace('-','')],
-                    ['Formated End Date',str(row_data[2].value.date()).replace('-','')]]
+                    ['Formated Start Date',int(str(start_date.date()).replace('-',''))],
+                    ['Formated End Date',int(str(row_data[2].value.date()).replace('-',''))]]
             #creates a new Workbook
             wb_acquirer = openpyxl.Workbook()
             acquirer_sheet = wb_acquirer.get_active_sheet()
