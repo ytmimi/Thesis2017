@@ -17,7 +17,6 @@ def update_sheet_with_BDP_description(workbook_path, sheet_name):
     for (index, cell) in enumerate(sheet['A10:B{}'.format(sheet.max_row)]):
         #cell[0] corresponds to cells in column A and cell[1] corresponds to cells in column B
         cell[1].value = abxl.add_BDP_fuction(cell[0].coordinate, "SECURITY_DES")
-        print(cell[0].value, cell[1].value)
     #saves the workbook
     wb.save(workbook_path)
 
