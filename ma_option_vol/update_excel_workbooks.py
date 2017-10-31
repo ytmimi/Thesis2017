@@ -99,7 +99,7 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
                                                                               start_date = data_sheet[sheet_start_date_cell].value,
                                                                               end_date = data_sheet[sheet_end_date_cell].value,
                                                                               optional_arg = BDH_optional_arg,
-                                                                              optional_val = BDH_optional_arg)
+                                                                              optional_val = BDH_optional_val)
 
     #if the loop ends without finding contracts 2 months past the completion/termination date, save the workbook      
     wb.save(workbook_path)  
@@ -178,7 +178,7 @@ def update_read_data_only(file_path):
     '''
     Opens an Excel workbook in read_only mode, removing links to function calls and keeps just the data stored in each cell.
     '''
-    wb=openpyxl.load_workbook(file_path, data_only = True)
+    wb= openpyxl.load_workbook(file_path, data_only= True)
     wb.save(file_path)
 
 
@@ -267,7 +267,7 @@ def update_stock_price_sheet(workbook_path, sheet_name, stock_sheet_index, sheet
                                                                             start_date = reference_sheet[sheet_start_date_cell].value,
                                                                             end_date = reference_sheet[sheet_end_date_cell].value,
                                                                             optional_arg = BDH_optional_arg,
-                                                                            optional_val = BDH_optional_arg)
+                                                                            optional_val = BDH_optional_val)
     #saves the newly added sheet to the workbook.
     wb.save(workbook_path)
     print('Adding stock sheet to the Workbook...')
