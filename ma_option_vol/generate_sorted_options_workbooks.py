@@ -1,6 +1,7 @@
 import openpyxl
 import os
 import re
+import datetime as dt
 
 
 def group_contracts_by_strike(wb):
@@ -111,7 +112,12 @@ def create_sorted_sheet(new_workbook, reference_wb, new_sheet_title, reference_s
                         new_sheet.cell(row=i, column=max_col).value = data_sheet.cell(row= i, column= column_num).value
                     
                     else:
-                        new_sheet.cell(row=i, column=max_col+1).value = data_sheet.cell(row= i, column= column_num).value
+                    	#if the value is a datetime object, then make sure the value of the cell is a formated date
+                    	if type(data_sheet.cell(row= i, column= column_num).value) == dt.datetime:
+                        	new_sheet.cell(row=i, column=max_col+1).value = data_sheet.cell(row= i, column= column_num).value.date()
+                    	else:
+                        	new_sheet.cell(row=i, column=max_col+1).value = data_sheet.cell(row= i, column= column_num).value
+
                                 
 
         #else: just grab the data_column    
@@ -145,13 +151,13 @@ def convert_to_numbers(lst):
 
 
 
-def create_sorted_workbooks(reference_wb_path, data_start_row, data_column, index_column):
+def create_sorted_workbooks(reference_wb_path, header_start_row, data_column, index_column):
     '''
     Creates a new workbook, containing sorted data in each of its sheets
 
     reference_wb_path   should be the path to the workbook that data will be taken from
 
-    data_start_row      is a variable that will be passed to the call of create_sorted_sheet()
+    header_start_row      is a variable that will be passed to the call of create_sorted_sheet()
 
     data_column         is a variable that will be passed to the call of create_sorted_sheet()
 
@@ -169,7 +175,7 @@ def create_sorted_workbooks(reference_wb_path, data_start_row, data_column, inde
                         reference_wb= reference_wb,
                         new_sheet_title= 'Stock Price',
                         reference_sheet_list=[reference_wb.get_sheet_names()[1]],
-                        data_start_row= data_start_row,
+                        data_start_row= header_start_row,
                         data_column= [data_column[0]],
                         index_column= index_column)
 
@@ -178,7 +184,7 @@ def create_sorted_workbooks(reference_wb_path, data_start_row, data_column, inde
                         reference_wb= reference_wb,
                         new_sheet_title= 'Stock Price',
                         reference_sheet_list=[reference_wb.get_sheet_names()[1]],
-                        data_start_row= data_start_row,
+                        data_start_row= header_start_row,
                         data_column= [data_column[0]],
                         index_column= index_column)
 
@@ -193,7 +199,7 @@ def create_sorted_workbooks(reference_wb_path, data_start_row, data_column, inde
                             reference_wb= reference_wb,
                             new_sheet_title= key,
                             reference_sheet_list=contracts['call'][key],
-                            data_start_row= data_start_row,
+                            data_start_row= header_start_row,
                             data_column= data_column,
                             index_column= index_column)
     
@@ -205,7 +211,7 @@ def create_sorted_workbooks(reference_wb_path, data_start_row, data_column, inde
                             reference_wb= reference_wb,
                             new_sheet_title= key,
                             reference_sheet_list=contracts['put'][key],
-                            data_start_row= data_start_row,
+                            data_start_row= header_start_row,
                             data_column= data_column,
                             index_column= index_column)
     
