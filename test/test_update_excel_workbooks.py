@@ -3,7 +3,7 @@ import os
 import sys
 import openpyxl
 import pandas as pd
-from test_path import test_path, test_path3
+from test_path import test_path, test_path3, NextEra_test_path 
 
 parent_path = os.path.abspath(os.pardir)
 path = os.path.join(parent_path,'ma_option_vol')
@@ -21,7 +21,7 @@ import update_excel_workbooks as uxlw
 #test the update_options_contract_sheets function.
 #adds a new sheet for each option contract listed in the Options Chain sheet and pulls bloomberg data for each field listed in 
 '''
-uxlw.update_option_contract_sheets(workbook_path=test_path,
+uxlw.update_option_contract_sheets(workbook_path=NextEra_test_path, #change back to test_path after testing NextEra sheet
 									sheet_name='Options Chain',
 									sheet_start_date_cell='B7',
 									sheet_end_date_cell='B8',
@@ -30,13 +30,13 @@ uxlw.update_option_contract_sheets(workbook_path=test_path,
 									data_table_header=['PX_LAST','PX_BID','PX_ASK','PX_VOLUME','OPEN_INT', 'IVOL'],
 									BDH_optional_arg=['Days', 'Fill'],
 									BDH_optional_val=['W','0'])
-'''
+'''								
 
 #deletes all worksheets in the workbook except the first worksheet
-#uxlw.delet_workbook_sheets(test_path)
+#uxlw.delet_workbook_sheets(NextEra_test_path) #change back to test_path after testing NextEra sheet
 
 #update the index for each sheet in relation to the announcement date
-#uxlw.update_workbook_data_index(workbook_path =test_path)
+uxlw.update_workbook_data_index(workbook_path =test_path, data_start_row=9)
 
 #test the find_column_index_by_header() function
 # wb = openpyxl.load_workbook(test_path3)
@@ -45,12 +45,12 @@ uxlw.update_option_contract_sheets(workbook_path=test_path,
 # 	print(key, data_dict[key])
 
 #test the update_workbook_average_column() function
-uxlw.update_workbook_average_column(reference_wb_path = test_path3, column_header='PX_LAST', header_row=8, data_start_row=9, ignore_sheet_list=['Stock Price'])
+#uxlw.update_workbook_average_column(reference_wb_path = test_path3, column_header='PX_LAST', header_row=8, data_start_row=9, ignore_sheet_list=['Stock Price'])
 
 
 #test the update_stock_price_sheet()
 '''
-uxlw.update_stock_price_sheet(	workbook_path =test_path,
+uxlw.update_stock_price_sheet(	workbook_path =NextEra_test_path, #change back to test_path after testing NextEra sheet
 							sheet_name='Options Chain',
 							stock_sheet_index = 1,
 							sheet_start_date_cell='B7',
