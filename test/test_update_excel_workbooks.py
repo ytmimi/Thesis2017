@@ -8,6 +8,7 @@ from test_path import test_path, test_path3, NextEra_test_path
 parent_path = os.path.abspath(os.pardir)
 path = os.path.join(parent_path,'ma_option_vol')
 
+
 #adds the file path for the ma_options_vol module to the path that python will search in order to look for modules
 sys.path.append(path)
 
@@ -30,13 +31,13 @@ uxlw.update_option_contract_sheets(workbook_path=NextEra_test_path, #change back
 									data_table_header=['PX_LAST','PX_BID','PX_ASK','PX_VOLUME','OPEN_INT', 'IVOL'],
 									BDH_optional_arg=['Days', 'Fill'],
 									BDH_optional_val=['W','0'])
-'''								
+'''
 
 #deletes all worksheets in the workbook except the first worksheet
 #uxlw.delet_workbook_sheets(NextEra_test_path) #change back to test_path after testing NextEra sheet
 
 #update the index for each sheet in relation to the announcement date
-uxlw.update_workbook_data_index(workbook_path =test_path, data_start_row=9)
+#uxlw.update_workbook_data_index(workbook_path =test_path, data_start_row=9)
 
 #test the find_column_index_by_header() function
 # wb = openpyxl.load_workbook(test_path3)

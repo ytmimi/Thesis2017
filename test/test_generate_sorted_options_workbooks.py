@@ -44,8 +44,8 @@ import generate_sorted_options_workbooks as gsow
 #NOTE: one of the helper functions for the given function is, generate_sorted_sheets(),
 #and its fuction is to generate the formated sheets of the workbook
 #this test also test the other function.
-gsow.create_sorted_workbooks(reference_wb_path= NextEra_test_path, #change back to test_path2 after testing NextEra sheet
-						data_start_row= 8, 
+gsow.create_sorted_workbooks(reference_wb_path= test_path2,
+						header_start_row=8,
 						data_column=['C','E'], 
 						index_column=['A','B'])
 
