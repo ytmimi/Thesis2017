@@ -1,4 +1,5 @@
 /dist
+*.ipynb_checkpoints
 *.egg-info/
 *__pycache__
 test_path.py
