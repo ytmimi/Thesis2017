@@ -33,6 +33,11 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
 
     sheet_end_date_cell Specify the coordinates of the the cell in the specified sheet that contains the end date
     '''
+    #a regular expression to for a formated option description where the strike is an integer
+    option_description_pattern_int = re.compile(r'^[A-Z]+\s[A-Z]+\s\d{2}/\d{2}/\d{2}\s\w+$')
+
+    option_description_pattern_float = re.compile(r'^[A-Z]+\s[A-Z]+\s\d{2}/\d{2}/\d{2}\s\w+\.\w+$')
+
     #combine data_table_index and data_table_header
     total_data_headers = data_table_index+data_table_header
 
@@ -55,54 +60,58 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
         completion_date= data_sheet[sheet_end_date_cell].value.date()
 
     total_rows = data_sheet.max_row
+
+    sheet_count = 0
     #iterate through the rows of the data_sheet
     #NOTE: THE SHEET IS SET UP SO THAT VALUES WE'RE INTERESTED IN START AT ROW 10
     for (index, cell) in enumerate(data_sheet['A10:B{}'.format(total_rows)]):
         
-        #if there is no option description, then break out of this loop
-        if cell[1].value == None:
-            print('No option description found. Could not create new workbook sheets')
-            wb.save(workbook_path)
-            break
+        #checks to see if the cell value follows the pattern of an option description
+        if (re.match(option_description_pattern_int, cell[1].value) or re.match(option_description_pattern_float, cell[1].value)) :
 
-        #format_option_description() returns the following list:
-        #[security_name, option_description, option_type, expiration_date, strike_price]
-        option_data = format_option_description(cell[0].value, cell[1].value)
+            #format_option_description() returns the following list:
+            #[security_name, option_description, option_type, expiration_date, strike_price]
+            option_data = format_option_description(cell[0].value, cell[1].value)
 
-        #the number of days between the expiration and completion date. 
-        date_diff = (option_data[3] - completion_date).days
+            #the number of days between the expiration and completion date. 
+            date_diff = (option_data[3] - completion_date).days
 
-        #if the expiration_date occurs 2 months after the completion_date, then stop creating sheets
-        if date_diff >= 60:
-            print('Found contracts past {}. Saving the workbook with {} new tabs'.format(completion_date, index))
-            wb.save(workbook_path)
-            break
+            #if the expiration_date occurs 2 months after the completion_date, then stop creating sheets
+            if date_diff >= 60:
+                wb.save(workbook_path)
+                print('Found contracts past {}'.format(completion_date))
+                break
+                #otherwise, keep creating sheets
+            else:
+                #creates a new sheet for the passed in workbook
+                new_sheet = wb.create_sheet()
+                #increment the sheet count by 1
+                sheet_count +=1
+                #/' aren't allowed in excel sheet names, so we replace them with '-' if the name contains '/' 
+                new_sheet.title = option_data[1].replace('/', '-')
 
-        #otherwise, keep creating sheets
+                #zip creates a tuple pair for each item of the passed in lists. this tuple can then be appended to the sheet
+                for data in zip(option_data_labels,option_data):
+                    new_sheet.append(data)
+
+                #loop through every value of total_data_headers and add it to the worksheet at the specified data_header_row
+                for (index, value) in enumerate(total_data_headers, start= 1) :
+                    new_sheet.cell(row = data_header_row,column = index ).value = value 
+
+                #add the BDH formula to the sheet
+                new_sheet['B{}'.format(data_header_row+1)] = abxl.add_option_BDH( security_name = option_data[0],
+                                                                                  fields = data_table_header, 
+                                                                                  start_date = data_sheet[sheet_start_date_cell].value,
+                                                                                  end_date = data_sheet[sheet_end_date_cell].value,
+                                                                                  optional_arg = BDH_optional_arg,
+                                                                                  optional_val = BDH_optional_val)
         else:
-            #creates a new sheet for the passed in workbook
-            new_sheet = wb.create_sheet()
-            #/' aren't allowed in excel sheet names, so we replace them with '-' if the name contains '/' 
-            new_sheet.title = option_data[1].replace('/', '-')
-
-            #zip creates a tuple pair for each item of the passed in lists. this tuple can then be appended to the sheet
-            for data in zip(option_data_labels,option_data):
-                new_sheet.append(data)
-
-            #loop through every value of total_data_headers and add it to the worksheet at the specified data_header_row
-            for (index, value) in enumerate(total_data_headers, start= 1) :
-                new_sheet.cell(row = data_header_row,column = index ).value = value 
-
-            #add the BDH formula to the sheet
-            new_sheet['B{}'.format(data_header_row+1)] = abxl.add_option_BDH( security_name = option_data[0],
-                                                                              fields = data_table_header, 
-                                                                              start_date = data_sheet[sheet_start_date_cell].value,
-                                                                              end_date = data_sheet[sheet_end_date_cell].value,
-                                                                              optional_arg = BDH_optional_arg,
-                                                                              optional_val = BDH_optional_val)
-
+            print('Not a valid option description. Could not create new workbook sheets for {}'.format(cell[1].value))
+            continue
+    
     #if the loop ends without finding contracts 2 months past the completion/termination date, save the workbook      
-    wb.save(workbook_path)  
+    wb.save(workbook_path) 
+    print('Saving the workbook with {} new tabs'.format(sheet_count)) 
  
 
 def format_option_description(security_name, option_description):
@@ -126,6 +135,7 @@ def format_option_description(security_name, option_description):
     #description_list[-1][1:] = '18', and converts the string to an int
     try:
         strike_price = int(description_list[-1][1:])
+    #if the string was a floating point number like 18.5, convert it to a float
     except:
         strike_price = float(description_list[-1][1:])
 
@@ -187,9 +197,14 @@ def delet_workbook_sheets(workbook_path):
     start_sheet_num = len(wb.get_sheet_names())
     #if there is more than one sheet in the workook
     if start_sheet_num > 1:
-        #loop through every sheet name in the workbook excep the first sheet
+        #loop through every sheet name in the workbook except the first sheet
         for (index,sheet) in enumerate(wb.get_sheet_names()[1:]):
+            #if the length of the sheet list ==1 stop deleting cells
+            if len(wb.get_sheet_names()) ==1:
+                break
+            else:
                 wb.remove_sheet(wb.get_sheet_by_name(sheet))
+                
     end_sheet_num = len(wb.get_sheet_names())
     deleted_sheet_num = start_sheet_num - end_sheet_num 
     print('Deleted {} sheets from the Workbook'.format(deleted_sheet_num))
@@ -284,7 +299,7 @@ def update_workbook_average_column(reference_wb_path, column_header, header_row,
     #returns a dictionary of 'sheet_names':[column data indexes] for each sheet of the given workbook
     sheet_data_columns =find_column_index_by_header(reference_wb= reference_wb, column_header= column_header, header_row= header_row)
 
-    #removes any sheets that are ment to be ignored
+    #removes any sheets that are ment to be ignored if provided
     if ignore_sheet_list != []:
         #iterates over every sheet name passed into ignore_sheet_list
         for index, ignore_sheet in enumerate(ignore_sheet_list):
@@ -378,10 +393,12 @@ def average_from_list(lst):
     '''
     Given a list, an average is computed for all the numbers in the list
     '''
+    #counter used for the function
     total = 0
-    for index, num in enumerate(lst):
-        total+= num
-
+    #iterare over the provided list
+    for (index, num) in enumerate(lst):
+        #increase the counter by the value of each number in the lst
+        total+= num    
     return (total/ len(lst))
 
 
