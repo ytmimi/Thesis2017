@@ -144,7 +144,7 @@ def format_option_description(security_name, option_description):
     return option_data_list
 
 
-def update_workbook_data_index(workbook_path):
+def update_workbook_data_index(workbook_path, data_start_row):
     '''
     Given a workbook, loop through all the sheets of that workbook and update the index for each sheet.
     '''
@@ -163,7 +163,7 @@ def update_workbook_data_index(workbook_path):
             #get the announcement date from the first sheet
             announcement_date = sheet['B5'].value
         if index > 0:
-            update_sheet_index(sheet_name= sheet, date=announcement_date, start_row= 9)
+            update_sheet_index(sheet_name= sheet, date=announcement_date, start_row= data_start_row)
     wb.save(workbook_path)
     print('Saving workbook')
 
@@ -204,7 +204,7 @@ def delet_workbook_sheets(workbook_path):
                 break
             else:
                 wb.remove_sheet(wb.get_sheet_by_name(sheet))
-                
+
     end_sheet_num = len(wb.get_sheet_names())
     deleted_sheet_num = start_sheet_num - end_sheet_num 
     print('Deleted {} sheets from the Workbook'.format(deleted_sheet_num))
