@@ -1,7 +1,10 @@
 import openpyxl
 import datetime as dt
 import re
+from statistics import mean, stdev
+from math import ceil, floor
 import add_bloomberg_excel_functions as abxl
+from generate_sorted_options_workbooks import convert_to_numbers
 
 def update_sheet_with_BDP_description(workbook_path, sheet_name):
     '''
@@ -33,9 +36,10 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
 
     sheet_end_date_cell Specify the coordinates of the the cell in the specified sheet that contains the end date
     '''
-    #a regular expression to for a formated option description where the strike is an integer
+    #a regular expression for a formated option description where the strike is an integer
     option_description_pattern_int = re.compile(r'^[A-Z]+\s[A-Z]+\s\d{2}/\d{2}/\d{2}\s\w+$')
 
+    #a regular expression for a formated option description where the strike is a foat
     option_description_pattern_float = re.compile(r'^[A-Z]+\s[A-Z]+\s\d{2}/\d{2}/\d{2}\s\w+\.\w+$')
 
     #combine data_table_index and data_table_header
@@ -48,7 +52,7 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
     #given the file path, an excel workbook is loaded.
     wb = openpyxl.load_workbook(workbook_path)
     
-    #The sheet we want to get data from is set to the variable sheet
+    #The sheet we want to get data from is set to the variable data_sheet
     data_sheet = wb.get_sheet_by_name(sheet_name)
     
 
@@ -62,6 +66,15 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
     total_rows = data_sheet.max_row
 
     sheet_count = 0
+
+    #gets the average stock price and standard deviation of the stock price data:
+    average = stock_price_average(reference_wb_path=workbook_path, price_column_header='PX_LAST', header_start_row=data_header_row) 
+    st_dev = stock_price_standard_dev(reference_wb_path=workbook_path, price_column_header='PX_LAST', header_start_row=data_header_row) 
+
+    st_dev_above = average+st_dev
+
+    st_dev_below = average-st_dev
+
     #iterate through the rows of the data_sheet
     #NOTE: THE SHEET IS SET UP SO THAT VALUES WE'RE INTERESTED IN START AT ROW 10
     for (index, cell) in enumerate(data_sheet['A10:B{}'.format(total_rows)]):
@@ -73,38 +86,42 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
             #[security_name, option_description, option_type, expiration_date, strike_price]
             option_data = format_option_description(cell[0].value, cell[1].value)
 
-            #the number of days between the expiration and completion date. 
-            date_diff = (option_data[3] - completion_date).days
+            strike_price = option_data[-1]
+            #check to see if the stike is within one standard deviation of the historical stock mean
+            if st_dev_below <= strike_price <= st_dev_above:
 
-            #if the expiration_date occurs 2 months after the completion_date, then stop creating sheets
-            if date_diff >= 60:
-                wb.save(workbook_path)
-                print('Found contracts past {}'.format(completion_date))
-                break
-                #otherwise, keep creating sheets
-            else:
-                #creates a new sheet for the passed in workbook
-                new_sheet = wb.create_sheet()
-                #increment the sheet count by 1
-                sheet_count +=1
-                #/' aren't allowed in excel sheet names, so we replace them with '-' if the name contains '/' 
-                new_sheet.title = option_data[1].replace('/', '-')
+                #the number of days between the expiration and completion date. 
+                date_diff = (option_data[3] - completion_date).days
 
-                #zip creates a tuple pair for each item of the passed in lists. this tuple can then be appended to the sheet
-                for data in zip(option_data_labels,option_data):
-                    new_sheet.append(data)
+                #if the expiration_date occurs 2 months after the completion_date, then stop creating sheets
+                if date_diff >= 60:
+                    wb.save(workbook_path)
+                    print('Found contracts past {}'.format(completion_date))
+                    break
+                    #otherwise, keep creating sheets
+                else:
+                    #creates a new sheet for the passed in workbook
+                    new_sheet = wb.create_sheet()
+                    #increment the sheet count by 1
+                    sheet_count +=1
+                    #/' aren't allowed in excel sheet names, so we replace them with '-' if the name contains '/' 
+                    new_sheet.title = option_data[1].replace('/', '-')
 
-                #loop through every value of total_data_headers and add it to the worksheet at the specified data_header_row
-                for (index, value) in enumerate(total_data_headers, start= 1) :
-                    new_sheet.cell(row = data_header_row,column = index ).value = value 
+                    #zip creates a tuple pair for each item of the passed in lists. this tuple can then be appended to the sheet
+                    for data in zip(option_data_labels,option_data):
+                        new_sheet.append(data)
 
-                #add the BDH formula to the sheet
-                new_sheet['B{}'.format(data_header_row+1)] = abxl.add_option_BDH( security_name = option_data[0],
-                                                                                  fields = data_table_header, 
-                                                                                  start_date = data_sheet[sheet_start_date_cell].value,
-                                                                                  end_date = data_sheet[sheet_end_date_cell].value,
-                                                                                  optional_arg = BDH_optional_arg,
-                                                                                  optional_val = BDH_optional_val)
+                    #loop through every value of total_data_headers and add it to the worksheet at the specified data_header_row
+                    for (index, value) in enumerate(total_data_headers, start= 1) :
+                        new_sheet.cell(row = data_header_row,column = index ).value = value 
+
+                    #add the BDH formula to the sheet
+                    new_sheet['B{}'.format(data_header_row+1)] = abxl.add_option_BDH( security_name = option_data[0],
+                                                                                      fields = data_table_header, 
+                                                                                      start_date = data_sheet[sheet_start_date_cell].value,
+                                                                                      end_date = 'B4',
+                                                                                      optional_arg = BDH_optional_arg,
+                                                                                      optional_val = BDH_optional_val)
         else:
             print('Not a valid option description. Could not create new workbook sheets for {}'.format(cell[1].value))
             continue
@@ -144,10 +161,20 @@ def format_option_description(security_name, option_description):
     return option_data_list
 
 
-def update_workbook_data_index(workbook_path, data_start_row):
+def update_workbook_data_index(workbook_path, data_start_row, index_column):
     '''
     Given a workbook, loop through all the sheets of that workbook and update the index for each sheet.
     '''
+    #a regular expression for a formated option description where the strike is an integer
+    option_sheet_pattern_int = re.compile(r'^[A-Z]+\s[A-Z]+\s\d{2}-\d{2}-\d{2}\s\w+$')
+
+    #a regular expression for a formated option description where the strike is a foat
+    option_sheet_pattern_float = re.compile(r'^[A-Z]+\s[A-Z]+\s\d{2}-\d{2}-\d{2}\s\w+\.\w+$')
+
+    #a regular expression pattern for the stock sheet
+    stock_sheet_pattern =re.compile(r'^\w+\s\w+\s\w+$')
+
+
     #loads an excel workbook given the file path to that workbook.
     wb = openpyxl.load_workbook(workbook_path)
     #gets a list of all the sheets in the workbook
@@ -155,17 +182,23 @@ def update_workbook_data_index(workbook_path, data_start_row):
 
     #iterates through every sheet
     for (index, sheet_name) in enumerate(sheet_list):
-        #gets the sheet given the name in the sheet list
-        sheet = wb.get_sheet_by_name(sheet_name)       
-        #skips the first sheet of the workbook, becasuse data isn't stored there.
         #indexing starts at 0.
         if index == 0:
             #get the announcement date from the first sheet
+            sheet = wb.get_sheet_by_name(sheet_name)
             announcement_date = sheet['B5'].value
-        if index > 0:
-            update_sheet_index(sheet_name= sheet, date=announcement_date, start_row= data_start_row)
+        #if the sheet_name matches the stock sheet pattern:
+        if re.match(stock_sheet_pattern, sheet_name):
+            #load the stock workbook and save it to the stock_sheet variable
+            stock_sheet = wb.get_sheet_by_name(sheet_name)
+            update_sheet_index(sheet_name= stock_sheet, date=announcement_date, start_row= data_start_row)
+
+        #elif the sheet_name matches an options contract sheet 
+        elif(re.match(option_sheet_pattern_int, sheet_name) or re.match(option_sheet_pattern_float, sheet_name)):
+            option_sheet = wb.get_sheet_by_name(sheet_name)
+            copy_data(reference_sheet=stock_sheet, main_sheet=option_sheet,index_start_row=data_start_row, data_column=index_column)
     wb.save(workbook_path)
-    print('Saving workbook')
+    print('Indexed each sheet. Saving workbook...')
 
 
 def update_sheet_index(sheet_name, date, start_row):
@@ -239,6 +272,22 @@ def find_index_0(worksheet,start, end, date_0):
             average_index = int((end_index + start_index)/2)
   
     return average_index
+
+
+def copy_data(reference_sheet, main_sheet,index_start_row,data_column):
+    '''
+    copies data from the reference_sheet to the main_sheet
+    '''
+    #gets the total rows of the reference sheet
+    total_rows = reference_sheet.max_row
+
+    #converts data_column to a list of numbers in case it was passed in as column letters
+    data_column = convert_to_numbers(data_column)
+    #iterate over each item in data_column:
+    for (index,column_num) in enumerate(data_column):
+        #iterate over each row
+        for i in range(index_start_row, total_rows+1):
+            main_sheet.cell(row=i, column=column_num).value = reference_sheet.cell(row=i, column=column_num).value 
 
 
 def update_stock_price_sheet(workbook_path, sheet_name, stock_sheet_index, sheet_start_date_cell, sheet_end_date_cell,  data_header_row, data_table_index, data_table_header, BDH_optional_arg=None, BDH_optional_val=None ):
@@ -353,8 +402,8 @@ def update_sheet_average_column(reference_wb,sheet_name,data_columns, data_start
             sheet.cell(row=i, column=max_col+1).value = 0
         #else cell_values is populated
         else:
-            #set the value of the average column to the valued returned by average_from_list()
-            sheet.cell(row=i, column=max_col+1).value = average_from_list(cell_values)
+            #set the value of the average column to the mean of the cell_values
+            sheet.cell(row=i, column=max_col+1).value = statistics.mean(cell_values)
 
 
 def find_column_index_by_header(reference_wb, column_header, header_row):
@@ -389,17 +438,57 @@ def find_column_index_by_header(reference_wb, column_header, header_row):
     return data_columns_by_sheet
 
 
-def average_from_list(lst):
+def stock_data_to_list(reference_wb_path, price_column_header, header_start_row):
     '''
-    Given a list, an average is computed for all the numbers in the list
+    Given the file path to a workbook, data in a particular cell is added to a list and then the list is returned
     '''
-    #counter used for the function
-    total = 0
-    #iterare over the provided list
-    for (index, num) in enumerate(lst):
-        #increase the counter by the value of each number in the lst
-        total+= num    
-    return (total/ len(lst))
+    wb = openpyxl.load_workbook(reference_wb_path, data_only=True)
+
+    #returns a dictionary with {'sheet_name':[data_column]}
+    data_column = find_column_index_by_header(reference_wb = wb, column_header= price_column_header, header_row= header_start_row)
+
+    #data list to store all the values:
+    data_list = []
+
+    #re to insure the key is refering to the stock sheet
+    stock_sheet_pattern =re.compile(r'^\w+\s\w+\s\w+$')
+    #iterate over all the keys in the data_column:
+    for (index,key) in enumerate(data_column):
+        if re.match(stock_sheet_pattern, key):
+            #load the given workbook:
+            sheet = wb.get_sheet_by_name(key)
+            #get the max rows of the sheet
+            total_rows= sheet.max_row
+            #iterate over all the rows in the workbook:
+            for i in range(header_start_row+1, total_rows+1):
+                data_list.append(sheet.cell(row=i,column=data_column[key][0]).value)
+
+    #return the data_list
+    return data_list
+
+def stock_price_average(reference_wb_path, price_column_header, header_start_row):
+    '''
+    returns the average of the price data in the stock sheet
+    '''
+    #stores the stock price data list
+    stock_data_list = stock_data_to_list(reference_wb_path= reference_wb_path, price_column_header= price_column_header, header_start_row= header_start_row)
+    #calculates the mean of the data
+    stock_mean = floor(mean(stock_data_list))
+    return stock_mean
+
+def stock_price_standard_dev(reference_wb_path, price_column_header, header_start_row):
+    '''
+    returns the standard deviation of the stock price data
+    '''
+    #stores the stock price data list
+    stock_data_list = stock_data_to_list(reference_wb_path= reference_wb_path, price_column_header= price_column_header, header_start_row= header_start_row)
+    standard_dev = ceil(stdev(data=stock_data_list))
+    return standard_dev
+
+
+        
+    
+
 
 
 
