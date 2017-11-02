@@ -12,7 +12,7 @@ def add_BDS_OPT_CHAIN (ticker_cell, type_cell, date_override_cell):
 
 	cell_ref =re.compile(r'[A-Z]+\d+$')
 	OPT_CHAIN = '"OPT_CHAIN"'
-	OPTION_CHAIN_OVERRIDE = '"OPTION_CHAIN_OVERRIDE","A"'
+	OPTION_CHAIN_OVERRIDE = '"OPTION_CHAIN_OVERRIDE","M"'
 	 
 	#checks if the function arguments are cell references or other strings. A string needs to be wrapped in " "
 	if re.match(cell_ref, ticker_cell):
@@ -127,7 +127,7 @@ def add_option_BDH(security_name, fields, start_date, end_date, optional_arg = N
     if type(start_date) == int:
     	END_DATE = '"{}"'.format(end_date)
     #checks if the end_date is a cell reference or a cell reference from another sheet
-    elif re.match(cell_ref, end_date) or re.match(sheet_cell_reference, start_date):
+    elif re.match(cell_ref, end_date) or re.match(sheet_cell_reference, end_date):
         END_DATE = end_date
     #checks if the other input isn't true, check if the date was formated correctly    
     elif re.match(formated_date, end_date):
