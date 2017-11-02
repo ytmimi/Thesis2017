@@ -3,7 +3,7 @@ import os
 import sys
 import openpyxl
 import pandas as pd
-from test_path import test_path, test_path3, NextEra_test_path 
+from test_path import test_path,test_path2, test_path3, NextEra_test_path, test_stock_price
 
 parent_path = os.path.abspath(os.pardir)
 path = os.path.join(parent_path,'ma_option_vol')
@@ -21,23 +21,22 @@ import update_excel_workbooks as uxlw
 
 #test the update_options_contract_sheets function.
 #adds a new sheet for each option contract listed in the Options Chain sheet and pulls bloomberg data for each field listed in 
-'''
-uxlw.update_option_contract_sheets(workbook_path=NextEra_test_path, #change back to test_path after testing NextEra sheet
-									sheet_name='Options Chain',
-									sheet_start_date_cell='B7',
-									sheet_end_date_cell='B8',
-									data_header_row=8,
-									data_table_index=['INDEX','DATE'],
-									data_table_header=['PX_LAST','PX_BID','PX_ASK','PX_VOLUME','OPEN_INT', 'IVOL'],
-									BDH_optional_arg=['Days', 'Fill'],
-									BDH_optional_val=['W','0'])
-'''
+
+# uxlw.update_option_contract_sheets(workbook_path=test_path, 
+# 									sheet_name='Options Chain',
+# 									sheet_start_date_cell='B7',
+# 									sheet_end_date_cell='B8',
+# 									data_header_row=8,
+# 									data_table_index=['INDEX','DATE'],
+# 									data_table_header=['PX_LAST','PX_BID','PX_ASK','PX_VOLUME','OPEN_INT', 'IVOL'],
+# 									BDH_optional_arg=['Days', 'Fill'],
+# 									BDH_optional_val=['T','0'])
 
 #deletes all worksheets in the workbook except the first worksheet
 #uxlw.delet_workbook_sheets(NextEra_test_path) #change back to test_path after testing NextEra sheet
 
 #update the index for each sheet in relation to the announcement date
-#uxlw.update_workbook_data_index(workbook_path =test_path, data_start_row=9)
+#uxlw.update_workbook_data_index(workbook_path =test_path, data_start_row=9, index_column=['A'])
 
 #test the find_column_index_by_header() function
 # wb = openpyxl.load_workbook(test_path3)
@@ -62,3 +61,19 @@ uxlw.update_stock_price_sheet(	workbook_path =NextEra_test_path, #change back to
 							BDH_optional_arg=None, 
 							BDH_optional_val=None )
 '''
+
+#test
+# stock_data = uxlw.stock_data_to_list(reference_wb_path=test_path2, price_column_header='PX_LAST', header_start_row=8)
+# print(stock_data)
+# average=uxlw.stock_price_average(reference_wb_path=test_path2, price_column_header='PX_LAST', header_start_row=8)
+# print(average)
+
+# st_dev=uxlw.stock_price_standard_dev(reference_wb_path=test_stock_price, price_column_header='PX_LAST', header_start_row=8)
+# print(st_dev)
+
+# print(average+st_dev)
+# print(average-st_dev)
+
+
+
+
