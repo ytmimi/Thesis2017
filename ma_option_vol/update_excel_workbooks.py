@@ -87,19 +87,18 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
             #[security_name, option_description, option_type, expiration_date, strike_price]
             option_data = format_option_description(cell[0].value, cell[1].value)
 
-            #check to see if the stike is within one standard deviation of the historical and merger stock mean
-            if ((is_in_range(num=option_data[-1], high=historic[0]+historic[1], low=historic[0]-historic[1])) or (is_in_range(num=option_data[-1], high=merger[0]+merger[1], low=merger[0]-merger[1]))):
+            #the number of days between the expiration and completion date. 
+            date_diff = (option_data[3] - completion_date).days
 
-                #the number of days between the expiration and completion date. 
-                date_diff = (option_data[3] - completion_date).days
-
-                #if the expiration_date occurs 2 months after the completion_date, then stop creating sheets
-                if date_diff >= 60:
-                    wb.save(workbook_path)
-                    print('Found contracts past {}'.format(completion_date))
-                    break
-                    #otherwise, keep creating sheets
-                else:
+            #if the expiration_date occurs 2 months after the completion_date, then stop creating sheets
+            if date_diff >= 60:
+                wb.save(workbook_path)
+                print('Found contracts past {}'.format(completion_date))
+                break
+                #otherwise, keep creating sheets
+            else:
+                #check to see if the stike is within one standard deviation of the historical and merger stock mean
+                if ((is_in_range(num=option_data[-1], high=historic[0]+historic[1], low=historic[0]-historic[1])) or (is_in_range(num=option_data[-1], high=merger[0]+merger[1], low=merger[0]-merger[1]))):
                     #creates a new sheet for the passed in workbook
                     new_sheet = wb.create_sheet()
                     #increment the sheet count by 1
@@ -117,11 +116,11 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
 
                     #add the BDH formula to the sheet
                     new_sheet['B{}'.format(data_header_row+1)] = abxl.add_option_BDH( security_name = option_data[0],
-                                                                                      fields = data_table_header, 
-                                                                                      start_date = data_sheet[sheet_start_date_cell].value,
-                                                                                      end_date = 'B4',
-                                                                                      optional_arg = BDH_optional_arg,
-                                                                                      optional_val = BDH_optional_val)
+                                                                                  fields = data_table_header, 
+                                                                                  start_date = data_sheet[sheet_start_date_cell].value,
+                                                                                  end_date = 'B4',
+                                                                                  optional_arg = BDH_optional_arg,
+                                                                                  optional_val = BDH_optional_val)
         else:
             print('Not a valid option description. Could not create new workbook sheets for {}'.format(cell[1].value))
             continue
