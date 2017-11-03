@@ -90,15 +90,15 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
             #the number of days between the expiration and completion date. 
             date_diff = (option_data[3] - completion_date).days
 
-            #if the expiration_date occurs 2 months after the completion_date, then stop creating sheets
-            if date_diff >= 60:
+            #if the expiration_date occurs 3 months after the completion_date, then stop creating sheets
+            if date_diff >= 90:
                 wb.save(workbook_path)
                 print('Found contracts past {}'.format(completion_date))
                 break
                 #otherwise, keep creating sheets
             else:
                 #check to see if the stike is within one standard deviation of the historical and merger stock mean
-                if ((is_in_range(num=option_data[-1], high=historic[0]+historic[1], low=historic[0]-historic[1])) or (is_in_range(num=option_data[-1], high=merger[0]+merger[1], low=merger[0]-merger[1]))):
+                if ((is_in_range(num=option_data[-1], high=historic[0]+2*historic[1], low=historic[0]-2*historic[1])) or (is_in_range(num=option_data[-1], high=merger[0]+2*merger[1], low=merger[0]-2*merger[1]))):
                     #creates a new sheet for the passed in workbook
                     new_sheet = wb.create_sheet()
                     #increment the sheet count by 1
@@ -165,10 +165,10 @@ def update_workbook_data_index(workbook_path, data_start_row, index_column):
     Given a workbook, loop through all the sheets of that workbook and update the index for each sheet.
     '''
     #a regular expression for a formated option description where the strike is an integer
-    option_sheet_pattern_int = re.compile(r'^[A-Z]+\s[A-Z]+\s\d{2}-\d{2}-\d{2}\s\w+$')
+    option_sheet_pattern_int = re.compile(r'^\w+\s\w+\s\d{2}-\d{2}-\d{2}\s\w+$')
 
     #a regular expression for a formated option description where the strike is a foat
-    option_sheet_pattern_float = re.compile(r'^[A-Z]+\s[A-Z]+\s\d{2}-\d{2}-\d{2}\s\w+\.\w+$')
+    option_sheet_pattern_float = re.compile(r'^\w+\s\w+\s\d{2}-\d{2}-\d{2}\s\w+\.\w+$')
 
     #a regular expression pattern for the stock sheet
     stock_sheet_pattern =re.compile(r'^\w+\s\w+\s\w+$')
@@ -527,10 +527,10 @@ def fill_option_wb_empty_cells(reference_wb_path, column_start, row_start, fill_
     wb = openpyxl.load_workbook(reference_wb_path)
 
     #re for options sheets with int strikes
-    option_sheet_pattern_int = re.compile(r'^[A-Z]+\s[A-Z]+\s\d{2}-\d{2}-\d{2}\s\w+$')
+    option_sheet_pattern_int = re.compile(r'^\w+\s\w+\s\d{2}-\d{2}-\d{2}\s\w+$')
 
     #re for options sheets with float strikes
-    option_sheet_pattern_float = re.compile(r'^[A-Z]+\s[A-Z]+\s\d{2}-\d{2}-\d{2}\s\w+\.\w+$')
+    option_sheet_pattern_float = re.compile(r'^\w+\s\w+\s\d{2}-\d{2}-\d{2}\s\w+\.\w+$')
 
     #iterate over each sheet
     for (index,sheet_name) in enumerate(wb.get_sheet_names()):
