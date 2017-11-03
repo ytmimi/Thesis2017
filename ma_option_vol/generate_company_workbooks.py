@@ -28,7 +28,6 @@ class Create_Company_Workbooks():
                 #creates the new workbooks
                 self.new_target_workbook(row_data=row, target_path= self.target_path)
                 self.new_acquirer_workbook(row_data=row, acquirer_path= self.acquirer_path)
-                break #<---remove when done testing
         print('\nDone creating company files.')
 
 
