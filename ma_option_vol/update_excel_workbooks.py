@@ -37,10 +37,10 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
     sheet_end_date_cell Specify the coordinates of the the cell in the specified sheet that contains the end date
     '''
     #a regular expression for a formated option description where the strike is an integer
-    option_description_pattern_int = re.compile(r'^[A-Z]+\s[A-Z]+\s\d{2}/\d{2}/\d{2}\s\w+$')
+    option_description_pattern_int = re.compile(r'^\w+\s\w+\s\d{2}/\d{2}/\d{2}\s\w+$')
 
     #a regular expression for a formated option description where the strike is a foat
-    option_description_pattern_float = re.compile(r'^[A-Z]+\s[A-Z]+\s\d{2}/\d{2}/\d{2}\s\w+\.\w+$')
+    option_description_pattern_float = re.compile(r'^\w+\s\w+\s\d{2}/\d{2}/\d{2}\s\w+\.\w+$')
 
     #combine data_table_index and data_table_header
     total_data_headers = data_table_index+data_table_header
