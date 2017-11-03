@@ -90,8 +90,8 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
             #the number of days between the expiration and completion date. 
             date_diff = (option_data[3] - completion_date).days
 
-            #if the expiration_date occurs 3 months after the completion_date, then stop creating sheets
-            if date_diff >= 90:
+            #if the expiration_date occurs 2 months after the completion_date, then stop creating sheets
+            if date_diff >= 60:
                 wb.save(workbook_path)
                 print('Found contracts past {}'.format(completion_date))
                 break
