@@ -55,6 +55,7 @@ class Create_Company_Workbooks():
                     ['Announcement Date', row_data[1].value.date()],
                     ['End Date', row_data[2].value.date()],
                     ['Formated Start Date',int(str(start_date.date()).replace('-',''))],
+                    ['Formated Announcement Date',int(str(row_data[1].value.date()).replace('-','')) ],
                     ['Formated End Date',int(str(row_data[2].value.date()).replace('-',''))]]
 
             #creates a new Workbook
@@ -63,7 +64,7 @@ class Create_Company_Workbooks():
             target_sheet.title = 'Options Chain'
             
             #appends the data to the workbook        
-            for (index, cell) in enumerate(target_sheet['A1:B8']):
+            for (index, cell) in enumerate(target_sheet['A1:B9']):
                 #tuple unpacking to set the cell values 
                 (cell[0].value, cell[1].value) = data[index]
             target_sheet['A10'] = abxl.add_BDS_OPT_CHAIN(ticker_cell='B2',type_cell='B3', date_override_cell='B7')
@@ -97,6 +98,7 @@ class Create_Company_Workbooks():
                     ['Announcement Date', row_data[1].value.date()],
                     ['End Date', row_data[2].value.date()],
                     ['Formated Start Date',int(str(start_date.date()).replace('-',''))],
+                    ['Formated Announcement Date',int(str(row_data[1].value.date()).replace('-','')) ],
                     ['Formated End Date',int(str(row_data[2].value.date()).replace('-',''))]]
             #creates a new Workbook
             wb_acquirer = openpyxl.Workbook()
@@ -104,7 +106,7 @@ class Create_Company_Workbooks():
             acquirer_sheet.title = 'Options Chain'     
             
             #appends the data to the workbook        
-            for (index, cell) in enumerate(acquirer_sheet['A1:B8']):
+            for (index, cell) in enumerate(acquirer_sheet['A1:B9']):
                 #tuple unpacking to set the cell values 
                 (cell[0].value, cell[1].value) = data[index]
             acquirer_sheet['A10'] = abxl.add_BDS_OPT_CHAIN(ticker_cell='B2',type_cell='B3', date_override_cell='B7')
