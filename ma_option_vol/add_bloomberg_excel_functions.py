@@ -12,7 +12,7 @@ def add_BDS_OPT_CHAIN (ticker_cell, type_cell, date_override_cell):
 
 	cell_ref =re.compile(r'[A-Z]+\d+$')
 	OPT_CHAIN = '"OPT_CHAIN"'
-	OPTION_CHAIN_OVERRIDE = '"OPTION_CHAIN_OVERRIDE","M"'
+	OPTION_CHAIN_OVERRIDE = '"OPTION_CHAIN_OVERRIDE","A"'
 	 
 	#checks if the function arguments are cell references or other strings. A string needs to be wrapped in " "
 	if re.match(cell_ref, ticker_cell):
