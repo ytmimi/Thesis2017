@@ -97,8 +97,8 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
                 break
                 #otherwise, keep creating sheets
             else:
-                #check to see if the stike is within one standard deviation of the historical and merger stock mean
-                if ((is_in_range(num=option_data[-1], high=historic[0]+2*historic[1], low=historic[0]-2*historic[1])) or (is_in_range(num=option_data[-1], high=merger[0]+2*merger[1], low=merger[0]-2*merger[1]))):
+                #check to see if the stike is within 1.5 standard deviation of the historical and merger stock mean
+                if ((is_in_range(num=option_data[-1], high=historic[0]+1.5*historic[1], low=historic[0]-1.5*historic[1])) or (is_in_range(num=option_data[-1], high=merger[0]+1.5*merger[1], low=merger[0]-1.5*merger[1]))):
                     #creates a new sheet for the passed in workbook
                     new_sheet = wb.create_sheet()
                     #increment the sheet count by 1
