@@ -1,9 +1,10 @@
 #imports to get the files
 import os
 import sys
+import datetime as dt
 import openpyxl
 import pandas as pd
-from test_path import test_path,test_path2, test_path3, NextEra_test_path, test_stock_price
+from test_path import test_path,test_path2, test_path3, NextEra_test_path, test_stock_price, Allegran_path
 
 parent_path = os.path.abspath(os.pardir)
 path = os.path.join(parent_path,'ma_option_vol')
@@ -73,6 +74,27 @@ uxlw.update_stock_price_sheet(	workbook_path =NextEra_test_path, #change back to
 
 # print(average+st_dev)
 # print(average-st_dev)
+
+#test mean and std functions:
+# wb = openpyxl.load_workbook(Allegran_path)
+# sheet = wb.get_sheet_by_name('Options Chain')
+# announcement_date =dt.datetime.strptime(str(sheet['B8'].value),'%Y%m%d')
+# print(announcement_date)
+
+# hm_std=uxlw.historic_stock_mean_and_std(reference_wb_path=Allegran_path, price_column_header='PX_LAST', header_start_row=8, date_0=announcement_date)
+# print(hm_std)
+# print('\n')
+# mm_std=uxlw.merger_stock_mean_and_std(reference_wb_path=Allegran_path, price_column_header='PX_LAST', header_start_row=8, date_0=announcement_date)
+# print(mm_std)
+
+# #test the in_range() function
+# print(uxlw.is_in_range(num=25, high=hm_std[0]+hm_std[1], low=hm_std[0]-hm_std[1]))
+# print(uxlw.is_in_range(num=hm_std[0], high=hm_std[0]+hm_std[1], low=hm_std[0]-hm_std[1]))
+
+
+# uxlw.fill_option_wb_empty_cells(reference_wb_path=Allegran_path, column_start=3, row_start=9, fill_value=0)
+
+
 
 
 
