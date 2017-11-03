@@ -252,22 +252,22 @@ def find_index_0(worksheet,start, end, date_0):
     index_list = [x for x in range(start,end+1)]
     start_index = index_list[0]
     end_index = index_list[-1]
-    average_index = int((end_index + start_index)/2)
+    average_index = floor((end_index + start_index)/2)
     #variable for the while loop
     found = False
     while not found:
         #print(start_index, found)        
-        curr_date = worksheet['B{}'.format(average_index)].value
+        curr_date = worksheet.cell(row=average_index, column=2).value
         if (date_0 == curr_date):
             found = True
 
         elif (date_0 > curr_date):
             start_index = average_index +1
-            average_index = int((end_index + start_index)/2)
+            average_index = floor((end_index + start_index)/2)
 
         elif (date_0 < curr_date):
             end_index = average_index -1
-            average_index = int((end_index + start_index)/2)
+            average_index = floor((end_index + start_index)/2)
 
     return average_index
 
@@ -450,7 +450,8 @@ def stock_data_to_list(reference_wb,price_column_header, header_start_row, start
             #load the worksheet
             sheet=reference_wb.get_sheet_by_name(key)
             for i in range(start_index, end_index+1):
-                data_list.append(sheet.cell(row=i,column=data_column[key][0]).value)
+                if sheet.cell(row=i,column=data_column[key][0]).value !=0:
+                    data_list.append(sheet.cell(row=i,column=data_column[key][0]).value)
     #return the data_list
     return data_list
 
