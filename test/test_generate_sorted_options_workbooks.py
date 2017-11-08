@@ -24,30 +24,57 @@ import generate_sorted_options_workbooks as gsow
 
 #test the group_contracts_by_strik() function
 # test_wb = openpyxl.load_workbook(test_path)
-# contracts = gsow.group_contracts_by_strike(wb = test_wb)
-# print(contracts['call'].keys())
-# print(contracts['put'].keys())
+# contracts1 = gsow.group_contracts_by_strike(reference_wb = test_wb)
+# print(contracts1['call'].keys())
+# print(contracts1['put'].keys())
 # print('\n')
 # #prints a sample of the list values stored in each key 
-# for (index, key) in enumerate(contracts['call']):
+# for (index, key) in enumerate(contracts1['call']):
 # 	if index > 4:
 # 		break
-# 	print(key, contracts['call'][key])
+# 	print(key, contracts1['call'][key])
 # print('\n')
-# for (index, key) in enumerate(contracts['put']):
+# for (index, key) in enumerate(contracts1['put']):
 # 	if index > 4:
 # 		break
-# 	print(key, contracts['put'][key])
+# 	print(key, contracts1['put'][key])
+
+
+# contracts2 = gsow.group_contracts_by_expiration(reference_wb = test_wb)
+# print(contracts2['call'].keys())
+# print(contracts2['put'].keys())
+# print('\n')
+# #prints a sample of the list values stored in each key
+# for (index, key) in enumerate(contracts2['call']):
+# 	if index > 4:
+# 		break
+# 	print(key, contracts2['call'][key])
+# print('\n')
+# for (index, key) in enumerate(contracts2['put']):
+# 	if index > 4:
+# 		break
+# 	print(key, contracts2['put'][key])
 
 
 #test the create_sorted_workbooks function.
 #NOTE: one of the helper functions for the given function is, generate_sorted_sheets(),
 #and its fuction is to generate the formated sheets of the workbook
-#this test also test the other function.
-gsow.create_sorted_workbooks(reference_wb_path= test_path2,
-						header_start_row=8,
-						data_column=['C','E'], 
-						index_column=['A','B'])
+#this test also test that function.
+# gsow.create_sorted_workbooks(reference_wb_path= test_path2, header_start_row=8,
+# 						data_column=['C','E'], index_column=['A','B'],
+# 						sort_by_strike=True, sort_by_expiration=True)
+
+# gsow.create_sorted_workbooks(reference_wb_path= test_path2, header_start_row=8,
+# 						data_column=['C','E'], index_column=['A','B'],
+# 						sort_by_strike=True, sort_by_expiration=False)
+
+# gsow.create_sorted_workbooks(reference_wb_path= test_path2, header_start_row=8,
+# 						data_column=['C','E'], index_column=['A','B'],
+# 						sort_by_strike=False, sort_by_expiration=True)
+
+# gsow.create_sorted_workbooks(reference_wb_path= test_path2, header_start_row=8,
+# 						data_column=['C','E'], index_column=['A','B'],
+# 						sort_by_strike=False, sort_by_expiration=False)
 
 
 
