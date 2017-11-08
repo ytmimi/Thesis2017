@@ -209,7 +209,7 @@ def update_sheet_index(sheet_name, date, start_row):
     total_rows = sheet_name.max_row
     #iterates over every cell in column
 
-    index_0 =find_index_0(worksheet=sheet_name,start= start_row, end=total_rows, date_0= date)
+    index_0 =find_index_0(worksheet=sheet_name,start= start_row, end=total_rows, date_col=2, date_0= date)
     #iterates over every column in the given date_column from the start to the end of the sheet
     for index in range(start_row, total_rows+1):
         sheet_name.cell(row= index, column=1).value = index - index_0
@@ -243,10 +243,20 @@ def delet_workbook_sheets(workbook_path):
     wb.save(workbook_path)
 
 
-def find_index_0(worksheet,start, end, date_0):
+def find_index_0(worksheet,start, end, date_col, date_0):
     '''
     binary search function to determine which row index of the worksheet
     contains the date we're looking for.
+
+    worksheet   Should be an openpyxl worksheet object
+
+    start       Should be an index >=1
+
+    end         Should be an index <= total rows of the given worksheet
+
+    date_col    Should be the column containing dates to search through. 1=A, 2=B, 3=C, etc.
+
+    date_0      The specific date to search for
     '''
     #list comprehesion  for all the row indexes.
     index_list = [x for x in range(start,end+1)]
@@ -257,7 +267,7 @@ def find_index_0(worksheet,start, end, date_0):
     found = False
     while not found:
         #print(start_index, found)        
-        curr_date = worksheet.cell(row=average_index, column=2).value
+        curr_date = worksheet.cell(row=average_index, column=date_col).value
         if (date_0 == curr_date):
             found = True
 
@@ -274,7 +284,7 @@ def find_index_0(worksheet,start, end, date_0):
 
 def copy_data(reference_sheet, main_sheet,index_start_row,data_column):
     '''
-    copies data from the reference_sheet to the main_sheet
+    Copies data from the reference_sheet to the main_sheet
     '''
     #gets the total rows of the reference sheet
     total_rows = reference_sheet.max_row
@@ -480,7 +490,7 @@ def historic_stock_mean_and_std(reference_wb_path,price_column_header, header_st
 
     total_rows=sheet.max_row
 
-    index0=find_index_0(worksheet=sheet,start=header_start_row+1, end=total_rows, date_0=date_0)
+    index0=find_index_0(worksheet=sheet,start=header_start_row+1, end=total_rows, date_col=2, date_0=date_0)
     data_list=stock_data_to_list(reference_wb=wb, price_column_header=price_column_header, 
                                  header_start_row=header_start_row, start_index=header_start_row+1, end_index=index0)
 
@@ -500,7 +510,7 @@ def merger_stock_mean_and_std(reference_wb_path, price_column_header, header_sta
 
     total_rows=sheet.max_row
 
-    index0=find_index_0(worksheet=sheet,start=header_start_row+1, end=total_rows, date_0=date_0)
+    index0=find_index_0(worksheet=sheet,start=header_start_row+1, end=total_rows, date_col=2, date_0=date_0)
     data_list=stock_data_to_list(reference_wb=wb, price_column_header=price_column_header, 
                                  header_start_row=header_start_row, start_index=index0, end_index=total_rows)
 
