@@ -8,8 +8,9 @@ import add_bloomberg_excel_functions as abxl
 class Create_Company_Workbooks():
     
 
-    def __init__(self, source_file, target_path, acquirer_path):
+    def __init__(self, source_file, source_sheet_name, target_path, acquirer_path):
         self.source_file = source_file
+        self.source_sheet_name = source_sheet_name
         self.target_path = target_path
         self.acquirer_path = acquirer_path
 
@@ -17,7 +18,7 @@ class Create_Company_Workbooks():
     def create_company_workbooks(self):
         #saves the n
         wb = openpyxl.load_workbook(self.source_file)
-        sheet = wb.get_sheet_by_name('Filtered Sample Set')
+        sheet = wb.get_sheet_by_name(self.source_sheet_name)
         
         #iterates over all the rows of the worksheet
         for (i, row) in enumerate(sheet.rows):
@@ -46,15 +47,19 @@ class Create_Company_Workbooks():
         cut_off_date = dt.datetime(2012,2,15)
         #if the start_date is greater than the cut off date, then create a new file
         if start_date > cut_off_date:
+
+            #checks that each announcement date is a weekday, if not, the date will be adjusted to the following Monday
+            announcement_date = self.adjust_to_weekday(row_data[1].value.date())
+
             #a list of data that will be added to each newly created worksheet
             data = [['Target Name', row_data[3].value], 
                     ['Target Ticker', row_data[4].value],
                     ['Type', 'Equity'],
                     ['Start Date', start_date.date()],
-                    ['Announcement Date', row_data[1].value.date()],
+                    ['Announcement Date', announcement_date],
                     ['End Date', row_data[2].value.date()],
                     ['Formated Start Date',int(str(start_date.date()).replace('-',''))],
-                    ['Formated Announcement Date',int(str(row_data[1].value.date()).replace('-','')) ],
+                    ['Formated Announcement Date',int(str(announcement_date).replace('-',''))],
                     ['Formated End Date',int(str(row_data[2].value.date()).replace('-',''))]]
 
             #creates a new Workbook
@@ -89,15 +94,19 @@ class Create_Company_Workbooks():
 
         #if the start_date is greater than the cut off date, then create a new file
         if start_date > cut_off_date:
+
+            #checks that each announcement date is a weekday, if not, the date will be adjusted to the following Monday
+            announcement_date = self.adjust_to_weekday(row_data[1].value.date())
+
             #a list of data that will be added to each newly created worksheet
             data = [['Acquirer Name', row_data[6].value], 
                     ['Acquirer Ticker', row_data[7].value],
                     ['Type', 'Equity'],
                     ['Start Date', start_date.date()],
-                    ['Announcement Date', row_data[1].value.date()],
+                    ['Announcement Date', announcement_date],
                     ['End Date', row_data[2].value.date()],
                     ['Formated Start Date',int(str(start_date.date()).replace('-',''))],
-                    ['Formated Announcement Date',int(str(row_data[1].value.date()).replace('-','')) ],
+                    ['Formated Announcement Date',int(str(announcement_date).replace('-',''))],
                     ['Formated End Date',int(str(row_data[2].value.date()).replace('-',''))]]
             #creates a new Workbook
             wb_acquirer = openpyxl.Workbook()
@@ -131,6 +140,22 @@ class Create_Company_Workbooks():
             final_path = '/'.join([workbook_path,'{}_{}.{}'.format(file_name.replace('/','_'),start_date_str , file_extension)])
             #save the worksheet
             new_workbook.save(final_path)
+
+    def adjust_to_weekday(self, date):
+        '''
+        A given datetime object is checked to see whether it is a weekend.  If it is, the date is adjusted to the next monday.
+        '''
+        #the dt.weekday() function returns a number from 0-6 corresponding to Monday-Sunday
+        #if its Saturday
+        if date.weekday() == 5: 
+            #adjusted to Monday
+            date += dt.timedelta(days=2) 
+        #if its Sunday 
+        elif date.weekday() == 6:
+            #adjusted the date to Monday
+            date += dt.timedelta(days=1) 
+        #return the adjusted date
+        return date 
 
 
 
