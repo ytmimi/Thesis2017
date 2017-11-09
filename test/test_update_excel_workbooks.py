@@ -37,7 +37,7 @@ import update_excel_workbooks as uxlw
 #uxlw.delet_workbook_sheets(NextEra_test_path) #change back to test_path after testing NextEra sheet
 
 #update the index for each sheet in relation to the announcement date
-#uxlw.update_workbook_data_index(workbook_path =test_path, data_start_row=9, index_column=['A'])
+uxlw.update_workbook_data_index(workbook_path =test_path, data_start_row=9, index_column='A')
 
 #test the find_column_index_by_header() function
 # wb = openpyxl.load_workbook(test_path3)
