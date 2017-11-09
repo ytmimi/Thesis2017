@@ -4,7 +4,7 @@ import sys
 import datetime as dt
 import openpyxl
 import pandas as pd
-from test_path import test_path,test_path2, test_path3, NextEra_test_path, test_stock_price, Allegran_path
+from test_path import test_path,test_path2, test_path3,test_path4, NextEra_test_path, test_stock_price, Allegran_path
 
 parent_path = os.path.abspath(os.pardir)
 path = os.path.join(parent_path,'ma_option_vol')
@@ -37,7 +37,7 @@ import update_excel_workbooks as uxlw
 #uxlw.delet_workbook_sheets(NextEra_test_path) #change back to test_path after testing NextEra sheet
 
 #update the index for each sheet in relation to the announcement date
-uxlw.update_workbook_data_index(workbook_path =test_path, data_start_row=9, index_column='A')
+#uxlw.update_workbook_data_index(workbook_path =test_path, data_start_row=9, index_column='A')
 
 #test the find_column_index_by_header() function
 # wb = openpyxl.load_workbook(test_path3)
@@ -92,7 +92,7 @@ uxlw.update_stock_price_sheet(	workbook_path =NextEra_test_path, #change back to
 # print(uxlw.is_in_range(num=hm_std[0], high=hm_std[0]+hm_std[1], low=hm_std[0]-hm_std[1]))
 
 
-# uxlw.fill_option_wb_empty_cells(reference_wb_path=Allegran_path, column_start=3, row_start=9, fill_value=0)
+uxlw.fill_option_wb_empty_cells(reference_wb_path=test_path4, column_start=3, row_start=9, fill_value=0)
 
 
 
