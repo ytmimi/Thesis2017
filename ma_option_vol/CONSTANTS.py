@@ -28,14 +28,17 @@ PUT_DESIGNATION_PATTERN = re.compile(r'[P]\d+')
 
 
 
-
-
-
 #USEFUL INFORMATINO FROM THE 'Treasury Rates.xlsx' file
-TREASURY_WORKBOOK_PATH = '{}/{}/{}/{}'.format(os.path.abspath(os.pardir), 'company_data','sample', 'Treasury Rates.xlsx')
-TREASURY_WORKSHEET= openpyxl.load_workbook(TREASURY_WORKBOOK_PATH).get_sheet_by_name('Intrest Rates')
+TREASURY_WORKBOOK_PATH = '{}/{}/{}/{}'.format(os.path.abspath(os.pardir), 'company_data','sample', 'Week_Day Treasury Rates.xlsx')
+
+TREASURY_WORKSHEET= openpyxl.load_workbook(TREASURY_WORKBOOK_PATH, data_only=True).get_sheet_by_name('Rates')
+
 TOTAL_TREASURY_SHEET_ROWS = TREASURY_WORKSHEET.max_row
-DATE_COLUMN= 1
-THREE_MONTH_COLUMN= 2
-SIX_MONTH_COLUMN= 3 
-TWELVE_MONTH_COLUMN= 4
+
+DATE_COLUMN= 2
+
+THREE_MONTH_COLUMN= 7
+
+SIX_MONTH_COLUMN= 8 
+
+TWELVE_MONTH_COLUMN= 9
