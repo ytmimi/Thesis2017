@@ -295,8 +295,11 @@ def copy_data(reference_sheet, main_sheet,index_start_row, index_end_row, refere
         #if the value is a datetime.datetime object
         if type(reference_sheet.cell(row= i, column= reference_data_column).value) == dt.datetime:
             main_sheet.cell(row=i, column=main_data_column).value = reference_sheet.cell(row=i, column=reference_data_column).value.date()
+        elif reference_sheet.cell(row= i, column= reference_data_column).value == None:
+            continue
         else:
             main_sheet.cell(row=i, column=main_data_column).value = reference_sheet.cell(row=i, column=reference_data_column).value
+
 
 
 def update_stock_price_sheet(workbook_path, sheet_name, stock_sheet_index, sheet_start_date_cell,sheet_announce_date_cell, sheet_end_date_cell,  data_header_row, data_table_index, data_table_header, BDH_optional_arg=None, BDH_optional_val=None ):
