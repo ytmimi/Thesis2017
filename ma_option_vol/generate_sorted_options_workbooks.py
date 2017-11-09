@@ -92,7 +92,7 @@ def create_sorted_sheet(new_workbook, reference_wb, new_sheet_title, reference_s
     
     reference_sheet_list  should be a list of sheets that you would like to pull data from
     
-    data_start_row        should be an integer indicating which row or the reference_sheet the data stars on
+    data_start_row        should be an integer indicating which row or the reference_sheet the data starts on
     
     data_column           should be a list of numbers, where 1=column A, 2=column B, 3=column C, and so on. 
                           specifies which columns of data are of interest from the reference_sheet contained in
@@ -101,7 +101,6 @@ def create_sorted_sheet(new_workbook, reference_wb, new_sheet_title, reference_s
     index_column          should be a list of numbers, where 1=column A, 2=column B, 3=column C, and so on.
                           specifies which columns from the reference_sheet_list[0], you want to use as your index's
                           NOTE: For accurate indexing, each sheet of data referenced should have the same index
-    
     '''
     #creates a new sheet where the combined data will be stored and names it based on the passed in new_sheet_title argument
     #If the only sheet is the default 'Sheet', then rename it to the desired new_sheet_title,
