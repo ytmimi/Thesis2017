@@ -58,7 +58,7 @@ def is_negative(num):
 		return False
 
 
-def calculate_sheet_iv(stock_sheet, option_sheet,sheet_date_column,sheet_price_column,data_start_row, three_month=True, six_month=False, twelve_month=False):
+def calculate_sheet_iv(stock_sheet, option_sheet,sheet_date_column,sheet_price_column,data_start_row, three_month_data_col=4,six_month_data_col=5, twelve_month_data_col=6 , three_month=True, six_month=False, twelve_month=False):
 	'''
 	Given a stock_sheet, and an option_sheet implied volatility is calculated for each row of the option_sheet that contains price data
 	'''
@@ -70,9 +70,10 @@ def calculate_sheet_iv(stock_sheet, option_sheet,sheet_date_column,sheet_price_c
 	#sets the total rows and columns of the options worksheet:
 	total_rows= option_sheet.max_row
 	total_cols= option_sheet.max_column
+
 	
 	#sets the starting index for the TREASURY_WORKSHEET
-	starting_rf_index= find_starting_risk_free_rate_index(start_date=option_sheet['B9'].value, data_start_row=9)
+	starting_rf_index= find_starting_risk_free_rate_index(start_date=option_sheet['B9'].value, data_start_row=2)
 
 	#iterate through each row of the option_sheet
 	for (index, i) in enumerate(range(data_start_row, total_rows+1)):
@@ -84,52 +85,73 @@ def calculate_sheet_iv(stock_sheet, option_sheet,sheet_date_column,sheet_price_c
 			#get the options price
 			option_price = option_sheet.cell(row= i, column= sheet_price_column).value
 
-			if option_price == 0:
-				option_sheet.cell(row=i,column= total_cols+1).value = 0
-			else:
-				#calcualte the days till expiration:
-				days_per_year= (days_till_expiration(start_date=date, expiration_date=expiration_date)/365)
-				#get the stock price from the stock_sheet
-				stock_price= stock_sheet.cell(row=i, column= sheet_price_column).value
-				
-				if three_month:
+			if three_month:
+				if option_price == 0:
+					option_sheet.cell(row=i,column= three_month_data_col).value = 0
+				else:
+					#calcualte the days till expiration:
+					days_per_year= (days_till_expiration(start_date=date, expiration_date=expiration_date)/365)
+					#get the stock price from the stock_sheet
+					stock_price= stock_sheet.cell(row=i, column= sheet_price_column).value
 					#get the risk free rate from the TREASURY_WORKSHEET
 					rf= TREASURY_WORKSHEET.cell(row=starting_rf_index+index, column=THREE_MONTH_COLUMN).value
+					#if rf is negative, set rf to 0
+					if is_negative(rf):
+						rf=0
 					ivol = calculate_implied_vol(stock_price= stock_price, strike_price= strike_price, days_till_expiration= days_per_year, 
 												 option_price=option_price, risk_free_rate=rf, option_type=option_type, dividend_yeild=0)
 					#sets the cell in the option_sheet to ivol
-					option_sheet.cell(row=i, column=total_cols).value= ivol
+					option_sheet.cell(row=i, column=three_month_data_col).value= ivol
 
-				if six_month:
+			if six_month:
+				if option_price == 0:
+					option_sheet.cell(row=i,column= six_month_data_col).value = 0
+				else:
+					#calcualte the days till expiration:
+					days_per_year= (days_till_expiration(start_date=date, expiration_date=expiration_date)/365)
+					#get the stock price from the stock_sheet
+					stock_price= stock_sheet.cell(row=i, column= sheet_price_column).value
 					#get the risk free rate from the TREASURY_WORKSHEET
-					rf= TREASURY_WORKSHEET.cell(row=starting_rf_index+index, column=SIX_MONTH_COLUMN).value
-					#calculate the implied volatility
+					rf= TREASURY_WORKSHEET.cell(row=starting_rf_index+index, column=THREE_MONTH_COLUMN).value
+					#if rf is negative, set rf to 0
+					if is_negative(rf):
+						rf=0
 					ivol = calculate_implied_vol(stock_price= stock_price, strike_price= strike_price, days_till_expiration= days_per_year, 
 												 option_price=option_price, risk_free_rate=rf, option_type=option_type, dividend_yeild=0)
 					#sets the cell in the option_sheet to ivol
-					option_sheet.cell(row=i, column=total_cols+1).value= ivol
+					option_sheet.cell(row=i, column=six_month_data_col).value= ivol
 
 
-				if twelve_month:
+
+			if twelve_month:
+				if option_price == 0:
+					option_sheet.cell(row=i,column= twelve_month_data_col).value = 0
+				else:
+					#calcualte the days till expiration:
+					days_per_year= (days_till_expiration(start_date=date, expiration_date=expiration_date)/365)
+					#get the stock price from the stock_sheet
+					stock_price= stock_sheet.cell(row=i, column= sheet_price_column).value
 					#get the risk free rate from the TREASURY_WORKSHEET
-					rf= TREASURY_WORKSHEET.cell(row=starting_rf_index+index, column=TWELVE_MONTH_COLUMN).value
-					#calculate the implied volatility
+					rf= TREASURY_WORKSHEET.cell(row=starting_rf_index+index, column=THREE_MONTH_COLUMN).value
+					#if rf is negative, set rf to 0
+					if is_negative(rf):
+						rf=0
 					ivol = calculate_implied_vol(stock_price= stock_price, strike_price= strike_price, days_till_expiration= days_per_year, 
 												 option_price=option_price, risk_free_rate=rf, option_type=option_type, dividend_yeild=0)
 					#sets the cell in the option_sheet to ivol
-					option_sheet.cell(row=i, column=total_cols+2).value= ivol
+					option_sheet.cell(row=i, column=twelve_month_data_col).value= ivol
 
 
-def calculate_workbook_iv(workbook_path,sheet_date_column,sheet_price_column,data_start_row,three_month, six_month, twelve_month):
+
+def calculate_workbook_iv(workbook_path, sheet_date_column, sheet_price_column, data_start_row, three_month_data_col=4, six_month_data_col=5, twelve_month_data_col=6, three_month=True, six_month=False, twelve_month=False):
 	'''
-	goes through an entire worksheet and calculates implied volatility for the data in each options sheet:
+	Calculates implied volatility for the data in each options worksheet.
 	'''
 	#loads the given workbook
 	wb = openpyxl.load_workbook(workbook_path)
 
 	#iterates through all the sheets in the workbook:
 	for index, sheet_name in enumerate(wb.get_sheet_names()):
-		import pdb; pdb.set_trace()
 		#if the sheet_name matches the STOCK_SHEET_PATTERN
 		if re.match(STOCK_SHEET_PATTERN, sheet_name):
 			#sets the stock sheet
@@ -139,24 +161,30 @@ def calculate_workbook_iv(workbook_path,sheet_date_column,sheet_price_column,dat
 		elif re.match(OPTION_SHEET_PATTERN_FLOAT, sheet_name) or re.match(OPTION_SHEET_PATTERN_INT,sheet_name):
 			#sets the option sheet
 			option_sheet = wb.get_sheet_by_name(sheet_name)
-			total_cols = option_sheet.max_column
-
+			
 			if three_month:
 				#set the column header
-				option_sheet.cell(row=data_start_row-1, column=total_cols+1).value = '3 Month IVOL'
+				option_sheet.cell(row=data_start_row-1, column=three_month_data_col).value = '3 Month IVOL'
+				#calculates the implied volatility for each row of the given sheet
+				calculate_sheet_iv(stock_sheet=stock_sheet, option_sheet=option_sheet, sheet_date_column=sheet_date_column,sheet_price_column=sheet_price_column,
+								three_month_data_col=three_month_data_col,six_month_data_col=six_month_data_col , twelve_month_data_col=twelve_month_data_col, 
+								data_start_row=9, three_month=True, six_month=False, twelve_month=False)
 
 			if six_month:
 				#set the column header
-				option_sheet.cell(row=data_start_row-1, column=total_cols+2).value ='6 Month IVOL'
+				option_sheet.cell(row=data_start_row-1, column=six_month_data_col).value ='6 Month IVOL'
+				#calculates the implied volatility for each row of the given sheet
+				calculate_sheet_iv(stock_sheet=stock_sheet, option_sheet=option_sheet, sheet_date_column=sheet_date_column,sheet_price_column=sheet_price_column,
+								three_month_data_col=three_month_data_col,six_month_data_col=six_month_data_col , twelve_month_data_col=twelve_month_data_col, 
+								data_start_row=9, three_month=False, six_month=True, twelve_month=False)
 
 			if twelve_month:
 				#set the column header 
-				option_sheet.cell(row=data_start_row-1, column=total_cols+3).value = '12 Month IVOL'
-
-			#calculates the implied volatility for each row of the given sheet
-			calculate_sheet_iv(stock_sheet=stock_sheet, option_sheet=option_sheet, sheet_date_column=sheet_date_column,
-						   sheet_price_column=sheet_price_column, data_start_row=9, three_month=True, six_month=False, twelve_month=False)
-
+				option_sheet.cell(row=data_start_row-1, column=twelve_month_data_col).value = '12 Month IVOL'
+				#calculates the implied volatility for each row of the given sheet
+				calculate_sheet_iv(stock_sheet=stock_sheet, option_sheet=option_sheet, sheet_date_column=sheet_date_column,sheet_price_column=sheet_price_column,
+								three_month_data_col=three_month_data_col,six_month_data_col=six_month_data_col , twelve_month_data_col=twelve_month_data_col, 
+								data_start_row=9, three_month=False, six_month=False, twelve_month=True)
 	#save the workbook:
 	wb.save(workbook_path)
 	print('Done calculating IVOL. Saving workbook...')
