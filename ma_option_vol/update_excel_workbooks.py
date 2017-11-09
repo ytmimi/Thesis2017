@@ -4,7 +4,8 @@ import re
 from statistics import mean, stdev
 from math import ceil, floor
 import add_bloomberg_excel_functions as abxl
-from generate_sorted_options_workbooks import convert_to_numbers
+from CONSTANTS import ( OPTION_DESCRIPTION_PATTERN_INT, OPTION_DESCRIPTION_PATTERN_FLOAT, OPTION_SHEET_PATTERN_INT, OPTION_SHEET_PATTERN_FLOAT,
+                        STOCK_SHEET_PATTERN)
 
 def update_sheet_with_BDP_description(workbook_path, sheet_name):
     '''
@@ -36,12 +37,7 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
 
     sheet_end_date_cell Specify the coordinates of the the cell in the specified sheet that contains the end date
     '''
-    #a regular expression for a formated option description where the strike is an integer
-    option_description_pattern_int = re.compile(r'^\w+\s\w+\s\d{2}/\d{2}/\d{2}\s\w+$')
-
-    #a regular expression for a formated option description where the strike is a foat
-    option_description_pattern_float = re.compile(r'^\w+\s\w+\s\d{2}/\d{2}/\d{2}\s\w+\.\w+$')
-
+    
     #combine data_table_index and data_table_header
     total_data_headers = data_table_index+data_table_header
 
@@ -81,7 +77,7 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
     for (index, cell) in enumerate(data_sheet['A10:B{}'.format(total_rows)]):
         
         #checks to see if the cell value follows the pattern of an option description
-        if (re.match(option_description_pattern_int, cell[1].value) or re.match(option_description_pattern_float, cell[1].value)) :
+        if (re.match(OPTION_DESCRIPTION_PATTERN_INT, cell[1].value) or re.match(OPTION_DESCRIPTION_PATTERN_FLOAT, cell[1].value)) :
 
             #format_option_description() returns the following list:
             #[security_name, option_description, option_type, expiration_date, strike_price]
@@ -164,20 +160,13 @@ def update_workbook_data_index(workbook_path, data_start_row, index_column):
     '''
     Given a workbook, loop through all the sheets of that workbook and update the index for each sheet.
     '''
-    #a regular expression for a formated option description where the strike is an integer
-    option_sheet_pattern_int = re.compile(r'^\w+\s\w+\s\d{2}-\d{2}-\d{2}\s\w+$')
-
-    #a regular expression for a formated option description where the strike is a foat
-    option_sheet_pattern_float = re.compile(r'^\w+\s\w+\s\d{2}-\d{2}-\d{2}\s\w+\.\w+$')
-
-    #a regular expression pattern for the stock sheet
-    stock_sheet_pattern =re.compile(r'^\w+\s\w+\s\w+$')
-
-
     #loads an excel workbook given the file path to that workbook.
     wb = openpyxl.load_workbook(workbook_path)
     #gets a list of all the sheets in the workbook
     sheet_list = wb.get_sheet_names()
+
+    #in case index column was passed in as a character, convert it to an integer
+    index_column= convert_to_numbers(index_column)
 
     #iterates through every sheet
     for (index, sheet_name) in enumerate(sheet_list):
@@ -187,38 +176,40 @@ def update_workbook_data_index(workbook_path, data_start_row, index_column):
             sheet = wb.get_sheet_by_name(sheet_name)
             announcement_date = sheet['B5'].value
         #if the sheet_name matches the stock sheet pattern:
-        if re.match(stock_sheet_pattern, sheet_name):
-            #load the stock workbook and save it to the stock_sheet variable
+        if re.match(STOCK_SHEET_PATTERN, sheet_name):
+            #load the stock sheet and save it to the stock_sheet variable
             stock_sheet = wb.get_sheet_by_name(sheet_name)
-            update_sheet_index(sheet_name= stock_sheet, date=announcement_date, start_row= data_start_row)
+            total_rows = stock_sheet.max_row
+            update_sheet_index(reference_sheet= stock_sheet, date=announcement_date, start_row= data_start_row)
 
         #elif the sheet_name matches an options contract sheet 
-        elif(re.match(option_sheet_pattern_int, sheet_name) or re.match(option_sheet_pattern_float, sheet_name)):
+        elif(re.match(OPTION_SHEET_PATTERN_INT, sheet_name) or re.match(OPTION_SHEET_PATTERN_FLOAT, sheet_name)):
+            #load the option sheet and save it to the option_sheet variable
             option_sheet = wb.get_sheet_by_name(sheet_name)
-            copy_data(reference_sheet=stock_sheet, main_sheet=option_sheet,index_start_row=data_start_row, data_column=index_column)
+            copy_data(reference_sheet=stock_sheet, main_sheet=option_sheet, index_start_row=data_start_row, 
+                      index_end_row=total_rows, reference_data_column=index_column, main_data_column=index_column)
     wb.save(workbook_path)
     print('Indexed each sheet. Saving workbook...')
 
 
-def update_sheet_index(sheet_name, date, start_row):
+def update_sheet_index(reference_sheet, date, start_row):
     '''
     Given an excel worksheet,a designated date, and a starting row,
     an index is added for each date relative to the specified date and row
     '''
     #gets the total number of rows in the worksheet
-    total_rows = sheet_name.max_row
-    #iterates over every cell in column
-
-    index_0 =find_index_0(worksheet=sheet_name,start= start_row, end=total_rows, date_col=2, date_0= date)
-    #iterates over every column in the given date_column from the start to the end of the sheet
+    total_rows = reference_sheet.max_row
+    
+    #returns the row index of the reference_sheet containg the date value
+    index_0 =find_index_0(worksheet=reference_sheet,start= start_row, end=total_rows, date_col=2, date_0= date)
+    #iterates over every column in the given date_column from the start to the end and add the index value to the cell
     for index in range(start_row, total_rows+1):
-        sheet_name.cell(row= index, column=1).value = index - index_0
-
+        reference_sheet.cell(row= index, column=1).value = index - index_0
 
 
 def update_read_data_only(file_path):
     '''
-    Opens an Excel workbook in read_only mode, removing links to function calls and keeps just the data stored in each cell.
+    Opens an Excel workbook in read_only mode, removing links to function calls, but maintaing the values stored in each cell.
     '''
     wb= openpyxl.load_workbook(file_path, data_only= True)
     wb.save(file_path)
@@ -282,20 +273,30 @@ def find_index_0(worksheet,start, end, date_col, date_0):
     return average_index
 
 
-def copy_data(reference_sheet, main_sheet,index_start_row,data_column):
+def copy_data(reference_sheet, main_sheet,index_start_row, index_end_row, reference_data_column, main_data_column):
     '''
-    Copies data from the reference_sheet to the main_sheet
-    '''
-    #gets the total rows of the reference sheet
-    total_rows = reference_sheet.max_row
+    Copies data from the reference_sheet to the main_sheet.  index_start_row is assumed to be the same for both the reference_sheet and main_sheet
 
-    #converts data_column to a list of numbers in case it was passed in as column letters
-    data_column = convert_to_numbers(data_column)
-    #iterate over each item in data_column:
-    for (index,column_num) in enumerate(data_column):
-        #iterate over each row
-        for i in range(index_start_row, total_rows+1):
-            main_sheet.cell(row=i, column=column_num).value = reference_sheet.cell(row=i, column=column_num).value 
+    reference_sheet:        Should be an openpyxl worksheet object that data will be coppied over from.
+
+    main_sheet:             Should be an openpyxl worksheet object taht data will be coppied to.
+
+    index_start_row:        Should be an integer that specifies the row of the worksheet to start copying from.
+
+    index_end_row:          Should be an interger that specifies the last row of the worksheet that data should be coppied from. 
+
+    reference_data_column:  Can either be an integer that specifies which column from the reference worksheet contains the data to copied
+                            or the letter associated with the data column 1=A, 2=B, C=3, etc.
+
+    main_data_column:       Can either be an integer that specifies which column in the main worksheet the data should be copied to
+                            or the letter associated with the data column 1=A, 2=B, C=3, etc.
+    '''
+    for i in range(index_start_row, index_end_row+1):
+        #if the value is a datetime.datetime object
+        if type(reference_sheet.cell(row= i, column= reference_data_column).value) == dt.datetime:
+            main_sheet.cell(row=i, column=main_data_column).value = reference_sheet.cell(row=i, column=reference_data_column).value.date()
+        else:
+            main_sheet.cell(row=i, column=main_data_column).value = reference_sheet.cell(row=i, column=reference_data_column).value
 
 
 def update_stock_price_sheet(workbook_path, sheet_name, stock_sheet_index, sheet_start_date_cell,sheet_announce_date_cell, sheet_end_date_cell,  data_header_row, data_table_index, data_table_header, BDH_optional_arg=None, BDH_optional_val=None ):
@@ -411,7 +412,7 @@ def update_sheet_average_column(reference_wb,sheet_name,data_columns, data_start
 
 def find_column_index_by_header(reference_wb, column_header, header_row):
     '''
-    Given a reference Wb, an average is calculated for the non zero cells of a specified column
+    Returns a dictionary where the key is the sheet name, and the value is the column where the specified header was located
     '''
     #an empty dictionary that will store the sheet_name as the key, and a list of data_columns as the key's value 
     data_columns_by_sheet= {}
@@ -450,13 +451,10 @@ def stock_data_to_list(reference_wb,price_column_header, header_start_row, start
 
     #data list to store all the values:
     data_list = []
-
-    #re to insure the key is refering to the stock sheet
-    stock_sheet_pattern =re.compile(r'^\w+\s\w+\s\w+$')
     
     #iterate over all the keys in the data_column:
     for (index,key) in enumerate(data_column):
-        if re.match(stock_sheet_pattern, key):
+        if re.match(STOCK_SHEET_PATTERN, key):
             #load the worksheet
             sheet=reference_wb.get_sheet_by_name(key)
             for i in range(start_index, end_index+1):
@@ -519,6 +517,7 @@ def merger_stock_mean_and_std(reference_wb_path, price_column_header, header_sta
 
     return(average, st_dev)
 
+
 def is_in_range(num, high, low):
     '''
     Given a number, and a high and low range, True is returned if the number is within the range 
@@ -536,16 +535,10 @@ def fill_option_wb_empty_cells(reference_wb_path, column_start, row_start, fill_
     #load the workbook
     wb = openpyxl.load_workbook(reference_wb_path)
 
-    #re for options sheets with int strikes
-    option_sheet_pattern_int = re.compile(r'^\w+\s\w+\s\d{2}-\d{2}-\d{2}\s\w+$')
-
-    #re for options sheets with float strikes
-    option_sheet_pattern_float = re.compile(r'^\w+\s\w+\s\d{2}-\d{2}-\d{2}\s\w+\.\w+$')
-
     #iterate over each sheet
     for (index,sheet_name) in enumerate(wb.get_sheet_names()):
         #if the sheet is an option sheet
-        if re.match(option_sheet_pattern_int, sheet_name) or re.match(option_sheet_pattern_float, sheet_name):
+        if re.match(OPTION_SHEET_PATTERN_INT, sheet_name) or re.match(OPTION_SHEET_PATTERN_FLOAT, sheet_name):
             sheet = wb.get_sheet_by_name(sheet_name)
             fill_option_sheet_empty_cells(reference_sheet=sheet,column_start= column_start, row_start= row_start, fill_value= fill_value)
     
@@ -570,6 +563,20 @@ def fill_option_sheet_empty_cells(reference_sheet, column_start, row_start, fill
                 reference_sheet.cell(row=j, column=i).value = fill_value
 
 
+
+def convert_to_numbers(lst):
+    '''
+    Takes a list or a single character, and returns an integer, where A=1, B=2, C=3,...etc.
+    '''
+    #if lst is passed in as just a single value
+    if type(lst) == str:
+        lst = openpyxl.utils.column_index_from_string(lst)
+    else:
+        #if lst is passed in as a list 
+        for (index, value) in enumerate(lst):
+            if type(value) == str:
+                lst[index] = openpyxl.utils.column_index_from_string(value)
+    return lst
 
     
 
