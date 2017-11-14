@@ -58,7 +58,7 @@ def is_negative(num):
 		return False
 
 
-def calculate_sheet_iv(stock_sheet, option_sheet,sheet_date_column,sheet_price_column,data_start_row, three_month_data_col=4,six_month_data_col=5, twelve_month_data_col=6 , three_month=True, six_month=False, twelve_month=False):
+def calculate_sheet_iv(stock_sheet, option_sheet,sheet_date_column,sheet_price_column,data_start_row,data_end_row, three_month_data_col=4,six_month_data_col=5, twelve_month_data_col=6 , three_month=True, six_month=False, twelve_month=False):
 	'''
 	Given a stock_sheet, and an option_sheet implied volatility is calculated for each row of the option_sheet that contains price data
 	'''
@@ -66,17 +66,12 @@ def calculate_sheet_iv(stock_sheet, option_sheet,sheet_date_column,sheet_price_c
 	option_type= option_sheet['B3'].value
 	expiration_date= option_sheet['B4'].value
 	strike_price= option_sheet['B5'].value
-
-	#sets the total rows and columns of the options worksheet:
-	total_rows= option_sheet.max_row
-	total_cols= option_sheet.max_column
-
 	
 	#sets the starting index for the TREASURY_WORKSHEET
 	starting_rf_index= find_starting_risk_free_rate_index(start_date=option_sheet['B9'].value, data_start_row=2)
 
 	#iterate through each row of the option_sheet
-	for (index, i) in enumerate(range(data_start_row, total_rows+1)):
+	for (index, i) in enumerate(range(data_start_row, data_end_row+1)):
 		#gets the value in the date column
 		date= option_sheet.cell(row=i,column=sheet_date_column).value
 		if date == None:
@@ -112,7 +107,7 @@ def calculate_sheet_iv(stock_sheet, option_sheet,sheet_date_column,sheet_price_c
 					#get the stock price from the stock_sheet
 					stock_price= stock_sheet.cell(row=i, column= sheet_price_column).value
 					#get the risk free rate from the TREASURY_WORKSHEET
-					rf= TREASURY_WORKSHEET.cell(row=starting_rf_index+index, column=THREE_MONTH_COLUMN).value
+					rf= TREASURY_WORKSHEET.cell(row=starting_rf_index+index, column=SIX_MONTH_COLUMN).value
 					#if rf is negative, set rf to 0
 					if is_negative(rf):
 						rf=0
@@ -120,8 +115,6 @@ def calculate_sheet_iv(stock_sheet, option_sheet,sheet_date_column,sheet_price_c
 												 option_price=option_price, risk_free_rate=rf, option_type=option_type, dividend_yeild=0)
 					#sets the cell in the option_sheet to ivol
 					option_sheet.cell(row=i, column=six_month_data_col).value= ivol
-
-
 
 			if twelve_month:
 				if option_price == 0:
@@ -132,7 +125,7 @@ def calculate_sheet_iv(stock_sheet, option_sheet,sheet_date_column,sheet_price_c
 					#get the stock price from the stock_sheet
 					stock_price= stock_sheet.cell(row=i, column= sheet_price_column).value
 					#get the risk free rate from the TREASURY_WORKSHEET
-					rf= TREASURY_WORKSHEET.cell(row=starting_rf_index+index, column=THREE_MONTH_COLUMN).value
+					rf= TREASURY_WORKSHEET.cell(row=starting_rf_index+index, column=TWELVE_MONTH_COLUMN).value
 					#if rf is negative, set rf to 0
 					if is_negative(rf):
 						rf=0
@@ -140,7 +133,6 @@ def calculate_sheet_iv(stock_sheet, option_sheet,sheet_date_column,sheet_price_c
 												 option_price=option_price, risk_free_rate=rf, option_type=option_type, dividend_yeild=0)
 					#sets the cell in the option_sheet to ivol
 					option_sheet.cell(row=i, column=twelve_month_data_col).value= ivol
-
 
 
 def calculate_workbook_iv(workbook_path, sheet_date_column, sheet_price_column, data_start_row, three_month_data_col=4, six_month_data_col=5, twelve_month_data_col=6, three_month=True, six_month=False, twelve_month=False):
@@ -156,6 +148,8 @@ def calculate_workbook_iv(workbook_path, sheet_date_column, sheet_price_column, 
 		if re.match(STOCK_SHEET_PATTERN, sheet_name):
 			#sets the stock sheet
 			stock_sheet = wb.get_sheet_by_name(sheet_name)
+			#gets the total rows from the stock sheet
+			stock_sheet_rows = stock_sheet.max_row
 
 		#if the sheet_name matches either of the OPTION_SHEET_PATTERNS'
 		elif re.match(OPTION_SHEET_PATTERN_FLOAT, sheet_name) or re.match(OPTION_SHEET_PATTERN_INT,sheet_name):
@@ -168,7 +162,7 @@ def calculate_workbook_iv(workbook_path, sheet_date_column, sheet_price_column, 
 				#calculates the implied volatility for each row of the given sheet
 				calculate_sheet_iv(stock_sheet=stock_sheet, option_sheet=option_sheet, sheet_date_column=sheet_date_column,sheet_price_column=sheet_price_column,
 								three_month_data_col=three_month_data_col,six_month_data_col=six_month_data_col , twelve_month_data_col=twelve_month_data_col, 
-								data_start_row=9, three_month=True, six_month=False, twelve_month=False)
+								data_start_row=9, data_end_row=stock_sheet_rows, three_month=True, six_month=False, twelve_month=False)
 
 			if six_month:
 				#set the column header
@@ -176,7 +170,7 @@ def calculate_workbook_iv(workbook_path, sheet_date_column, sheet_price_column, 
 				#calculates the implied volatility for each row of the given sheet
 				calculate_sheet_iv(stock_sheet=stock_sheet, option_sheet=option_sheet, sheet_date_column=sheet_date_column,sheet_price_column=sheet_price_column,
 								three_month_data_col=three_month_data_col,six_month_data_col=six_month_data_col , twelve_month_data_col=twelve_month_data_col, 
-								data_start_row=9, three_month=False, six_month=True, twelve_month=False)
+								data_start_row=9, data_end_row=stock_sheet_rows, three_month=False, six_month=True, twelve_month=False)
 
 			if twelve_month:
 				#set the column header 
@@ -184,7 +178,7 @@ def calculate_workbook_iv(workbook_path, sheet_date_column, sheet_price_column, 
 				#calculates the implied volatility for each row of the given sheet
 				calculate_sheet_iv(stock_sheet=stock_sheet, option_sheet=option_sheet, sheet_date_column=sheet_date_column,sheet_price_column=sheet_price_column,
 								three_month_data_col=three_month_data_col,six_month_data_col=six_month_data_col , twelve_month_data_col=twelve_month_data_col, 
-								data_start_row=9, three_month=False, six_month=False, twelve_month=True)
+								data_start_row=9, data_end_row=stock_sheet_rows, three_month=False, six_month=False, twelve_month=True)
 	#save the workbook:
 	wb.save(workbook_path)
 	print('Done calculating IVOL. Saving workbook...')
