@@ -468,14 +468,14 @@ def stock_data_to_list(reference_wb,price_column_header, header_start_row, start
 
 def data_average(data_list):
     '''
-    returns the average of a given list
+    returns the average of a given list, rounded down to the nearest whole number
     '''
     return floor(mean(data_list))
 
 
 def data_standard_dev(data_list):
     '''
-    returns the standard deviation of a given list
+    returns the standard deviation of a given list, rounded up to the nearest whole number
     '''
     return ceil(stdev(data=data_list))
 
@@ -581,7 +581,6 @@ def convert_to_numbers(lst):
                 lst[index] = openpyxl.utils.column_index_from_string(value)
     return lst
 
-    
 
 
 
