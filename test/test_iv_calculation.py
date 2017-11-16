@@ -3,7 +3,8 @@ import os
 import sys
 import datetime as dt
 import openpyxl
-from test_path import test_path,test_path2, test_path3,test_path4, NextEra_test_path, test_stock_price, Allegran_path
+from test_path import (test_path,test_path2, test_path3,test_path4, NextEra_test_path, test_stock_price, Allegran_path,Cameron_International_Corp_path,
+						AstraZeneca_PLC_path)
 
 parent_path = os.path.abspath(os.pardir)
 path = os.path.join(parent_path,'ma_option_vol')
@@ -38,5 +39,9 @@ import iv_calculation as ivc
 
 
 #test ivc.calculate_workbook_iv()
-ivc.calculate_workbook_iv(workbook_path= test_path4,sheet_date_column=2,sheet_price_column=3,
+ivc.calculate_workbook_iv(workbook_path= AstraZeneca_PLC_path,sheet_date_column=2,sheet_price_column=3,
+	three_month_data_col=4,six_month_data_col=5, twelve_month_data_col=6,
 	data_start_row=9,three_month=True, six_month=True, twelve_month=True)
+
+
+

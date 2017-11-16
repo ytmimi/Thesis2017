@@ -3,7 +3,7 @@ import os
 import sys
 import openpyxl
 import pandas as pd
-from test_path import test_path, test_path2, NextEra_test_path
+from test_path import test_path, test_path2,test_path5, NextEra_test_path
 
 parent_path = os.path.abspath(os.pardir)
 path = os.path.join(parent_path,'ma_option_vol')
@@ -68,9 +68,9 @@ import generate_sorted_options_workbooks as gsow
 # 						data_column=['C','E'], index_column=['A','B'],
 # 						sort_by_strike=True, sort_by_expiration=False)
 
-# gsow.create_sorted_workbooks(reference_wb_path= test_path2, header_start_row=8,
-# 						data_column=['C','E'], index_column=['A','B'],
-# 						sort_by_strike=False, sort_by_expiration=True)
+gsow.create_sorted_workbooks(reference_wb_path= test_path5, header_start_row=8,
+						data_column=['C','E'], index_column=['A','B'],
+						sort_by_strike=False, sort_by_expiration=True)
 
 # gsow.create_sorted_workbooks(reference_wb_path= test_path2, header_start_row=8,
 # 						data_column=['C','E'], index_column=['A','B'],
