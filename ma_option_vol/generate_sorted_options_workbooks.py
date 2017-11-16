@@ -118,8 +118,8 @@ def create_sorted_sheet(new_workbook, reference_wb, new_sheet_title, reference_s
             #load in the new worksheet.
             data_sheet = reference_wb.get_sheet_by_name(sheet_name)
             
-            #get the max rows of the loaded worksheet
-            max_row = data_sheet.max_row
+            #get the max row of the index column
+            max_row = find_end_index_row(reference_sheet=data_sheet, index_column=index_column[0])
             
             #iterate over the columns and the rows that we're interested in
             for (j,column_num) in enumerate(index_column+data_column):
@@ -141,8 +141,8 @@ def create_sorted_sheet(new_workbook, reference_wb, new_sheet_title, reference_s
             #load in the new worksheet.
             data_sheet = reference_wb.get_sheet_by_name(sheet_name)
             
-            #get the max rows of the loaded worksheet
-            max_row = data_sheet.max_row
+            #get the max row of the index column
+            max_row = find_end_index_row(reference_sheet=data_sheet, index_column=index_column[0])
             
             #iterate over the columns in the data_sheet that we're interested in
             for (j,column_num) in enumerate(data_column):
@@ -288,8 +288,17 @@ def save_new_workbook(new_workbook,workbook_path,new_folder,append_file_name):
         print('Saving {}.{}'.format(new_file_name,split_file_name[-1]))
 
 
+def find_end_index_row(reference_sheet, index_column):
+	'''
+	Given a reference sheet and an index_column, the last row in that column is returned.
+	'''
+	#Gets the last row of the reference sheet
+	sheet_max_row = reference_sheet.max_row
+	#while the value in the reference column is None, subtract 1 from sheet_max_row until a value is found in the index_column
+	while reference_sheet.cell(row=sheet_max_row, column=index_column).value == None:
+		sheet_max_row -=1
 
-
+	return sheet_max_row
 
 
 
