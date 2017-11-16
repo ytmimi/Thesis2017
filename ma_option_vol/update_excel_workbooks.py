@@ -603,7 +603,6 @@ def add_extra_sheets(reference_wb_path, sheet_name, ticker_column, description_c
     merger = merger_stock_mean_and_std(reference_wb_path=reference_wb_path, price_column_header='PX_LAST', header_start_row=data_header_row, date_0=dt.datetime.strptime(str(data_sheet[sheet_announce_date_cell].value),'%Y%m%d'))
 
     while (data_sheet.cell(row=total_rows, column= description_column).value).replace('/','-') not in wb.get_sheet_names():
-        import pdb; pdb.set_trace()
         #format_option_description() returns the following list:
         #[security_name, option_description, option_type, expiration_date, strike_price]
         option_data = format_option_description(data_sheet.cell(row=total_rows, column=ticker_column).value,
