@@ -582,6 +582,60 @@ def convert_to_numbers(lst):
     return lst
 
 
+def add_extra_sheets(reference_wb_path, sheet_name, ticker_column, description_column,sheet_start_date_cell, sheet_announce_date_cell, sheet_end_date_cell,  data_header_row, data_table_index, data_table_header, BDH_optional_arg=None, BDH_optional_val=None):
+    '''
+    Given a workbook containing option contract tickers and desctiptions, new sheets are added to the workbook if they don't already exist
+    '''
+    #combine data_table_index and data_table_header
+    total_data_headers = data_table_index+data_table_header
+    #data labels to be added to the new excel worksheet
+    option_data_labels = ['Security Name', 'Description', 'Type', 'Expiration Date', 'Strike Price']
+    #given the file path, an excel workbook is loaded.
+    wb = openpyxl.load_workbook(reference_wb_path)
+    #The sheet we want to get data from is set to the variable data_sheet
+    data_sheet = wb.get_sheet_by_name(sheet_name)
+    #gets the total rows of the worksheet
+    total_rows = data_sheet.max_row
+    #counter to keep track of each sheet created
+    sheet_count = 0
+    #gets the average stock price and standard deviation of the stock price data for the historic and merger period:
+    historic = historic_stock_mean_and_std(reference_wb_path=reference_wb_path, price_column_header='PX_LAST', header_start_row=data_header_row, date_0=dt.datetime.strptime(str(data_sheet[sheet_announce_date_cell].value),'%Y%m%d'))
+    merger = merger_stock_mean_and_std(reference_wb_path=reference_wb_path, price_column_header='PX_LAST', header_start_row=data_header_row, date_0=dt.datetime.strptime(str(data_sheet[sheet_announce_date_cell].value),'%Y%m%d'))
+
+    while (data_sheet.cell(row=total_rows, column= description_column).value).replace('/','-') not in wb.get_sheet_names():
+        import pdb; pdb.set_trace()
+        #format_option_description() returns the following list:
+        #[security_name, option_description, option_type, expiration_date, strike_price]
+        option_data = format_option_description(data_sheet.cell(row=total_rows, column=ticker_column).value,
+                                                        data_sheet.cell(row=total_rows, column=description_column).value)
+
+        if (re.match(OPTION_DESCRIPTION_PATTERN_INT, option_data[1]) or re.match(OPTION_DESCRIPTION_PATTERN_FLOAT,option_data[1])):
+           
+            #check to see if the stike is within 1.5 standard deviation of the historical and merger stock mean
+            if ((is_in_range(num=option_data[-1], high=historic[0]+1.5*historic[1], low=historic[0]-1.5*historic[1])) or (is_in_range(num=option_data[-1], high=merger[0]+1.5*merger[1], low=merger[0]-1.5*merger[1]))):
+                #creates a new sheet for the passed in workbook
+                new_sheet = wb.create_sheet()
+                #increment the sheet count by 1
+                sheet_count +=1
+                #/' aren't allowed in excel sheet names, so we replace them with '-' if the name contains '/' 
+                new_sheet.title = option_data[1].replace('/', '-')
+                #zip creates a tuple pair for each item of the passed in lists. this tuple can then be appended to the sheet
+                for data in zip(option_data_labels,option_data):
+                    new_sheet.append(data)
+                #loop through every value of total_data_headers and add it to the worksheet at the specified data_header_row
+                for (index, value) in enumerate(total_data_headers, start= 1) :
+                    new_sheet.cell(row = data_header_row,column = index ).value = value 
+                #add the BDH formula to the sheet
+                new_sheet['B{}'.format(data_header_row+1)] = abxl.add_option_BDH( security_name = option_data[0],
+                                                                              fields = data_table_header, 
+                                                                              start_date = data_sheet[sheet_start_date_cell].value,
+                                                                              end_date = 'B4',
+                                                                              optional_arg = BDH_optional_arg,
+                                                                              optional_val = BDH_optional_val)
+        total_rows -= 1
+    wb.save(reference_wb_path)
+    print('Added {} new sheets to the workbook'.format(sheet_count))
+
 
 
 

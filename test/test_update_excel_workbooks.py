@@ -4,7 +4,7 @@ import sys
 import datetime as dt
 import openpyxl
 import pandas as pd
-from test_path import test_path,test_path2, test_path3,test_path4, NextEra_test_path, test_stock_price, Allegran_path
+from test_path import test_path,test_path2, test_path3,test_path4, NextEra_test_path, test_stock_price, Allegran_path, Pfizer_test_path
 
 parent_path = os.path.abspath(os.pardir)
 path = os.path.join(parent_path,'ma_option_vol')
@@ -92,7 +92,14 @@ uxlw.update_stock_price_sheet(	workbook_path =NextEra_test_path, #change back to
 # print(uxlw.is_in_range(num=hm_std[0], high=hm_std[0]+hm_std[1], low=hm_std[0]-hm_std[1]))
 
 
-uxlw.fill_option_wb_empty_cells(reference_wb_path=test_path4, column_start=3, row_start=9, fill_value=0)
+#uxlw.fill_option_wb_empty_cells(reference_wb_path=test_path4, column_start=3, row_start=9, fill_value=0)
+
+
+uxlw.add_extra_sheets(reference_wb_path=Pfizer_test_path, sheet_name='Options Chain', ticker_column=1, 
+	description_column=2,sheet_start_date_cell='B7', sheet_announce_date_cell='B8', 
+	sheet_end_date_cell='B9',  data_header_row=8, data_table_index=['INDEX','DATE'], 
+	data_table_header=['PX_LAST'], BDH_optional_arg=['Days', 'Fill'], BDH_optional_val=['W','0'])
+
 
 
 
