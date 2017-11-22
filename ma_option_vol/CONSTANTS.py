@@ -35,6 +35,8 @@ TREASURY_WORKSHEET= openpyxl.load_workbook(TREASURY_WORKBOOK_PATH, data_only=Tru
 
 TOTAL_TREASURY_SHEET_ROWS = TREASURY_WORKSHEET.max_row
 
+TREASURY_DATA_START_ROW = 2
+
 DATE_COLUMN= 2
 
 THREE_MONTH_COLUMN= 7
@@ -42,3 +44,13 @@ THREE_MONTH_COLUMN= 7
 SIX_MONTH_COLUMN= 8 
 
 TWELVE_MONTH_COLUMN= 9
+
+
+#total number of minutes in a 365 day year
+MINUTES_PER_YEAR= 525600
+#total number of minutes in a 30 day period
+MINUTES_PER_MONTH= 43200
+
+
+
+
