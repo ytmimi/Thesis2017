@@ -12,7 +12,7 @@ sys.path.append(path)
 import VIX_calculation as vix_c
 
 vix_wb = openpyxl.load_workbook(vix_data)
-vix_sheet = vix_wb.get_sheet_by_name('Sheet1')
+vix_sheet = vix_wb.get_sheet_by_name('Data Set')
 
 #total rows in the vix sheet
 total_rows = vix_sheet.max_row
