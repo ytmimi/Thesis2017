@@ -117,12 +117,8 @@ print('************')
 
 
 vix_calc = vix_c.VIX_Calculation(Near_Term=near, Next_Term=next_)
-		
-print(vix_calc.N_T1)
-print(vix_calc.N_T2)
-print(vix_calc.VIX)
-print('13.685821')
-
+print('calculated VIX: {}'.format(vix_calc.VIX))
+print('expected VIX:   13.685821')
 
 
 

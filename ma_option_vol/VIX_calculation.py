@@ -21,7 +21,8 @@ class Option_Contract_Data():
 		elif self.px_ask == 0:
 			self.px_mid = self.px_bid
 		else:
-			self.px_mid = round((self.px_ask + self.px_bid)/2,2)
+			self.px_mid = round((self.px_ask + self.px_bid)/2,5)
+
 
 	def set_px_mid(self, value):
 		'''
@@ -246,11 +247,16 @@ class Near_Term():
 		return final_list
 
 
-	def delta_k(self, strike_high, strike_low):
+	def delta_k(self, strike_high, strike_low, end_point=False):
 		'''
-		Calculates the interval between the two given strike prices
+		Calculates the interval between the two given strike prices. By default, strike_high, and strike_low 
+		are assumed to be one strike above and below the strike delta_k is being calculated for. If delta_k is
+		being determined for either the start or end of a list of strikes, then return the difference of strike_high and strike_low
 		'''
-		return (strike_high - strike_low)/2
+		if end_point:
+			return (strike_high - strike_low)
+		else:	
+			return (strike_high - strike_low)/2
 
 
 	def option_contribution(self, strike_price, delta_strike, mid_price):
@@ -275,15 +281,15 @@ class Near_Term():
 			#calculate delta_k
 			#first contract, which has the lowest strike
 			if option == self.non_zero_bid_list[0]:
-				delta_k = self.delta_k(strike_high=self.non_zero_bid_list[index+1].strike_price, strike_low= self.non_zero_bid_list[index].strike_price)
+				delta_k = self.delta_k(strike_high=self.non_zero_bid_list[index+1].strike_price, strike_low= self.non_zero_bid_list[index].strike_price, end_point=True)
 
 			#last contract, which has the highest strike
 			elif option == self.non_zero_bid_list[-1]:
-				delta_k = self.delta_k(strike_high=self.non_zero_bid_list[index].strike_price, strike_low= self.non_zero_bid_list[index-1].strike_price)				
+				delta_k = self.delta_k(strike_high=self.non_zero_bid_list[index].strike_price, strike_low= self.non_zero_bid_list[index-1].strike_price, end_point=True)				
 
 			else:
 				delta_k = self.delta_k(strike_high=self.non_zero_bid_list[index+1].strike_price, strike_low= self.non_zero_bid_list[index-1].strike_price)
-			
+		
 			sum_contribution += self.option_contribution(strike_price = option.strike_price, delta_strike= delta_k, mid_price= option.px_mid)
 
 		return sum_contribution
@@ -352,6 +358,5 @@ class VIX_Calculation(object):
 		'''
 		return 100 * self.Near_Next_30_day_weighted_average()
 	
-
 
 
