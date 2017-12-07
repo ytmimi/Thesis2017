@@ -269,7 +269,6 @@ def save_new_workbook(new_workbook,workbook_path,new_folder,append_file_name):
 
     #takes the list and converts it to a string representing the new path.
     new_path ='/'.join(path_list)
-
     
     #checks to see if the given new_path exists
     if os.path.exists(new_path):
