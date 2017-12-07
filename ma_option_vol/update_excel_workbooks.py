@@ -36,11 +36,6 @@ def update_sheet_with_BDP_description(workbook_path, sheet_name, starting_col, s
                     #set the value of the adjacent cell
                     sheet.cell(row=j, column= i+1).value = abxl.add_BDP_fuction(sheet.cell(row=j, column=i).coordinate, "SECURITY_DES")
     
-    # #iterate over every row in column A and B starting at A10:B10 and ending at the last row of the worksheet
-    # for (index, cell) in enumerate(sheet['A10:B{}'.format(sheet.max_row)]):
-    #     #cell[0] corresponds to cells in column A and cell[1] corresponds to cells in column B
-    #     cell[1].value = abxl.add_BDP_fuction(cell[0].coordinate, "SECURITY_DES")
-    
     # #saves the workbook
     wb.save(workbook_path)
 
@@ -662,7 +657,6 @@ def add_extra_sheets(reference_wb_path, sheet_name, ticker_column, description_c
     print('Added {} new sheets to the workbook'.format(sheet_count))
 
 
-
 def update_workbook_days_till_expiration(reference_wb_path, data_start_row, date_col, calculation_col):
     '''
     Updates each option sheet in the workbook to contain the days till expiration for that sheets option
@@ -702,6 +696,7 @@ def update_sheet_days_till_expiration(reference_sheet, data_start_row, date_col,
             curr_date = reference_sheet.cell(row=i, column=date_col).value
             reference_sheet.cell(row=i, column=calculation_col).value = days_till_expiration(start_date=curr_date, 
                                                                                             expiration_date=exp_date)
+
 
 def days_till_expiration(start_date, expiration_date):
     '''
