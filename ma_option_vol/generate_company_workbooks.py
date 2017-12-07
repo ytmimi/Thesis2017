@@ -1,4 +1,3 @@
-#imports for the module
 import openpyxl
 import datetime as dt
 import os
@@ -71,7 +70,8 @@ class Create_Company_Workbooks():
             for (index, cell) in enumerate(target_sheet['A1:B9']):
                 #tuple unpacking to set the cell values 
                 (cell[0].value, cell[1].value) = data[index]
-            target_sheet['A10'] = abxl.add_BDS_OPT_CHAIN(ticker_cell='B2',type_cell='B3', date_override_cell='B7')
+            self.get_company_options_tickers(reference_sheet=target_sheet, start_date=start_date.date(), announcement_date=announcement_date, 
+                                    row=10, start_column=1, interval=90, ticker_cell='B2', type_cell='B3')
             
             self.save_new_workbook( new_workbook= wb_target, workbook_path= target_path, 
                                     file_name= row_data[3].value, start_date_str= str(row_data[1].value.date()),
@@ -117,13 +117,23 @@ class Create_Company_Workbooks():
             for (index, cell) in enumerate(acquirer_sheet['A1:B9']):
                 #tuple unpacking to set the cell values 
                 (cell[0].value, cell[1].value) = data[index]
-            acquirer_sheet['A10'] = abxl.add_BDS_OPT_CHAIN(ticker_cell='B2',type_cell='B3', date_override_cell='B7')
+            self.get_company_options_tickers(reference_sheet=acquirer_sheet, start_date=start_date.date(), announcement_date=announcement_date, 
+                                    row=10, start_column=1, interval=90, ticker_cell='B2', type_cell='B3')
             
             #saves the workbook
             self.save_new_workbook( new_workbook= wb_acquirer, workbook_path= acquirer_path,
                                     file_name= row_data[6].value, start_date_str=str(row_data[1].value.date()),
                                     file_extension= 'xlsx')
 
+
+    def get_company_options_tickers(self,reference_sheet, start_date, announcement_date, row, start_column, interval, ticker_cell, type_cell):
+        #loop through and call the BDS function every 3 months until a month past the announcemnt date
+        while start_date < (announcement_date + dt.timedelta(days=30)):
+            reference_sheet.cell(row=row,column=start_column).value = abxl.add_BDS_OPT_CHAIN(ticker_cell=ticker_cell,
+                                                                type_cell=type_cell, 
+                                                                date_override_cell=str(start_date).replace('-',''))
+            start_date += dt.timedelta(days=interval)
+            start_column +=2
 
     def save_new_workbook(self,new_workbook,workbook_path, file_name, start_date_str, file_extension):
         #checks to see if the given workbook_path exists
