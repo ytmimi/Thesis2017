@@ -9,10 +9,9 @@ def add_BDS_OPT_CHAIN (ticker_cell, type_cell, date_override_cell):
 	'''
 	#A cell reference follows the pattern 1 or more letters followed by 1 or more numbers.
 	#the variable cell_ref is a regualr expression representing the above pattern
-
 	cell_ref =re.compile(r'[A-Z]+\d+$')
 	OPT_CHAIN = '"OPT_CHAIN"'
-	OPTION_CHAIN_OVERRIDE = '"OPTION_CHAIN_OVERRIDE","A"'
+	OPTION_CHAIN_OVERRIDE = '"OPTION_CHAIN_OVERRIDE","M"'
 	 
 	#checks if the function arguments are cell references or other strings. A string needs to be wrapped in " "
 	if re.match(cell_ref, ticker_cell):
