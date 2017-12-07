@@ -181,7 +181,7 @@ def calculate_workbook_iv(workbook_path, sheet_date_column, sheet_price_column, 
 								data_start_row=9, data_end_row=stock_sheet_rows, three_month=False, six_month=False, twelve_month=True)
 	#save the workbook:
 	wb.save(workbook_path)
-	print('Done calculating IVOL. Saving workbook...')
+	print('Done calculating IVOL. Saving {}...'.format(workbook_path.split('/')[-1]))
  
 
 
