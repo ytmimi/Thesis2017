@@ -3,8 +3,8 @@ import openpyxl
 import datetime as dt
 from update_excel_workbooks import find_index_0
 from wallstreet.blackandscholes import BlackandScholes as BS
-from CONSTANTS import (TREASURY_WORKSHEET, TOTAL_TREASURY_SHEET_ROWS, DATE_COLUMN, THREE_MONTH_COLUMN, SIX_MONTH_COLUMN, TWELVE_MONTH_COLUMN,
-OPTION_SHEET_PATTERN_INT,OPTION_SHEET_PATTERN_FLOAT,STOCK_SHEET_PATTERN )
+from CONSTANTS import (TREASURY_WORKSHEET, TOTAL_TREASURY_SHEET_ROWS, TREASURY_DATA_START_ROW, DATE_COLUMN, THREE_MONTH_COLUMN, SIX_MONTH_COLUMN,
+	TWELVE_MONTH_COLUMN, OPTION_SHEET_PATTERN_INT,OPTION_SHEET_PATTERN_FLOAT,STOCK_SHEET_PATTERN )
 
 
 
@@ -38,7 +38,7 @@ def days_till_expiration(start_date, expiration_date):
 	return (expiration_date-start_date).days
 
 
-def find_starting_risk_free_rate_index(start_date, data_start_row):
+def find_starting_risk_free_rate_index(start_date, data_start_row=TREASURY_DATA_START_ROW):
 	'''
 	Search the TREASURY_SHEET for the start_date provided.
 
@@ -68,7 +68,7 @@ def calculate_sheet_iv(stock_sheet, option_sheet,sheet_date_column,sheet_price_c
 	strike_price= option_sheet['B5'].value
 	
 	#sets the starting index for the TREASURY_WORKSHEET
-	starting_rf_index= find_starting_risk_free_rate_index(start_date=option_sheet['B9'].value, data_start_row=2)
+	starting_rf_index= find_starting_risk_free_rate_index(start_date=option_sheet['B9'].value)
 
 	#iterate through each row of the option_sheet
 	for (index, i) in enumerate(range(data_start_row, data_end_row+1)):
