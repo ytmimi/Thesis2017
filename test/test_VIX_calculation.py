@@ -120,8 +120,11 @@ vix_calc = vix_c.VIX_Calculation(Near_Term=near, Next_Term=next_)
 print('calculated VIX: {}'.format(vix_calc.VIX))
 print('expected VIX:   13.685821')
 
-
-
-
+#consolidated calculation function
+# print('************')
+# consol_vix_calc = vix_c.calculate_vix(near_term_dict=near_option_dict, next_term_dict=next_option_dict, 
+# 										R1=r1, R2=r2, current_date= today, current_time='9:46 AM', 
+# 										near_settlement_time='8:30 AM', next_settlement_time='3:00 PM')
+# print(consol_vix_calc)
 
 

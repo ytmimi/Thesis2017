@@ -18,20 +18,22 @@ sys.path.append(path)
 import update_excel_workbooks as uxlw
 
 #update_sheet with the BDP function
-#uxlw.update_sheet_with_BDP_description(workbook_path =test_path)
+#uxlw.update_sheet_with_BDP_description(workbook_path =Allegran_path,sheet_name='Options Chain', starting_col=1, starting_row=10)
 
 #test the update_options_contract_sheets function.
 #adds a new sheet for each option contract listed in the Options Chain sheet and pulls bloomberg data for each field listed in 
-
-# uxlw.update_option_contract_sheets(workbook_path=test_path, 
-# 									sheet_name='Options Chain',
-# 									sheet_start_date_cell='B7',
-# 									sheet_end_date_cell='B8',
-# 									data_header_row=8,
-# 									data_table_index=['INDEX','DATE'],
-# 									data_table_header=['PX_LAST','PX_BID','PX_ASK','PX_VOLUME','OPEN_INT', 'IVOL'],
-# 									BDH_optional_arg=['Days', 'Fill'],
-# 									BDH_optional_val=['T','0'])
+uxlw.update_option_contract_sheets(workbook_path=Allegran_path, 
+									sheet_name='Options Chain',
+									starting_col=1,
+									starting_row=10,
+									sheet_start_date_cell='B7',
+									sheet_announce_date_cell='B8',
+									sheet_end_date_cell='B9',
+									data_header_row=8,
+									data_table_index=['INDEX','DATE'],
+									data_table_header=['PX_LAST','PX_BID','PX_ASK','PX_VOLUME','OPEN_INT', 'IVOL'],
+									BDH_optional_arg=['Days', 'Fill'],
+									BDH_optional_val=['T','0'])
 
 #deletes all worksheets in the workbook except the first worksheet
 #uxlw.delet_workbook_sheets(NextEra_test_path) #change back to test_path after testing NextEra sheet
@@ -95,10 +97,10 @@ uxlw.update_stock_price_sheet(	workbook_path =NextEra_test_path, #change back to
 #uxlw.fill_option_wb_empty_cells(reference_wb_path=test_path4, column_start=3, row_start=9, fill_value=0)
 
 
-uxlw.add_extra_sheets(reference_wb_path=Pfizer_test_path, sheet_name='Options Chain', ticker_column=1, 
-	description_column=2,sheet_start_date_cell='B7', sheet_announce_date_cell='B8', 
-	sheet_end_date_cell='B9',  data_header_row=8, data_table_index=['INDEX','DATE'], 
-	data_table_header=['PX_LAST'], BDH_optional_arg=['Days', 'Fill'], BDH_optional_val=['W','0'])
+# uxlw.add_extra_sheets(reference_wb_path=Pfizer_test_path, sheet_name='Options Chain', ticker_column=1, 
+# 	description_column=2,sheet_start_date_cell='B7', sheet_announce_date_cell='B8', 
+# 	sheet_end_date_cell='B9',  data_header_row=8, data_table_index=['INDEX','DATE'], 
+# 	data_table_header=['PX_LAST'], BDH_optional_arg=['Days', 'Fill'], BDH_optional_val=['W','0'])
 
 
 
