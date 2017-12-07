@@ -4,6 +4,13 @@ import sys
 import os
 
 
+#Root path to all the files
+ROOT_PATH = os.path.abspath(os.pardir)
+#path to acquirer folder
+ACQUIRER_DIR = os.path.join(ROOT_PATH,'company_data', 'acquirer')
+
+#path to the target folder
+TARGET_DIR = os.path.join(ROOT_PATH,'company_data', 'target')
 
 #a regular expression for a formated option description where the strike is an integer
 OPTION_SHEET_PATTERN_INT = re.compile(r'^\w+\s\w+\s\d{2}-\d{2}-\d{2}\s\w+$')
