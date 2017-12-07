@@ -7,7 +7,7 @@ import add_bloomberg_excel_functions as abxl
 from CONSTANTS import ( OPTION_DESCRIPTION_PATTERN_INT, OPTION_DESCRIPTION_PATTERN_FLOAT, OPTION_SHEET_PATTERN_INT, OPTION_SHEET_PATTERN_FLOAT,
                         STOCK_SHEET_PATTERN)
 
-def update_sheet_with_BDP_description(workbook_path, sheet_name):
+def update_sheet_with_BDP_description(workbook_path, sheet_name, starting_col, starting_row):
     '''
     Given an excel workbook, The BDP function is added with the appropriate cell reference and description  
     Note: The excel workbook needs to be opened and saved so that bloomberg data can populate
@@ -16,16 +16,36 @@ def update_sheet_with_BDP_description(workbook_path, sheet_name):
     wb = openpyxl.load_workbook(workbook_path)
     #gets the specified sheet from the workbook
     sheet = wb.get_sheet_by_name(sheet_name)
+    total_rows = sheet.max_row
+    total_columns = sheet.max_column
     
-    #iterate over every row in column A and B starting at A10:B10 and ending at the last row of the worksheet
-    for (index, cell) in enumerate(sheet['A10:B{}'.format(sheet.max_row)]):
-        #cell[0] corresponds to cells in column A and cell[1] corresponds to cells in column B
-        cell[1].value = abxl.add_BDP_fuction(cell[0].coordinate, "SECURITY_DES")
-    #saves the workbook
+    #make this a dictionary, where the key is the ticker
+    unique_ticker = []
+    #iterate over each column:
+    for i in range(starting_col, total_columns+1, 2):
+        #iterate over each row:
+        for j in range(starting_row, total_rows+1):
+            #check if the current cell is blank
+            if sheet.cell(row=j, column=i).value == None:
+                break
+            else:
+                #check to see if the cell value is unique
+                if sheet.cell(row=j, column=i).value not in unique_ticker:
+                    #add the value to the ticker list
+                    unique_ticker.append(sheet.cell(row=j, column=i).value)
+                    #set the value of the adjacent cell
+                    sheet.cell(row=j, column= i+1).value = abxl.add_BDP_fuction(sheet.cell(row=j, column=i).coordinate, "SECURITY_DES")
+    
+    # #iterate over every row in column A and B starting at A10:B10 and ending at the last row of the worksheet
+    # for (index, cell) in enumerate(sheet['A10:B{}'.format(sheet.max_row)]):
+    #     #cell[0] corresponds to cells in column A and cell[1] corresponds to cells in column B
+    #     cell[1].value = abxl.add_BDP_fuction(cell[0].coordinate, "SECURITY_DES")
+    
+    # #saves the workbook
     wb.save(workbook_path)
 
 
-def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_cell, sheet_announce_date_cell, sheet_end_date_cell,  data_header_row, data_table_index, data_table_header, BDH_optional_arg=None, BDH_optional_val=None):
+def update_option_contract_sheets(workbook_path, sheet_name,starting_col,starting_row, sheet_start_date_cell, sheet_announce_date_cell, sheet_end_date_cell,  data_header_row, data_table_index, data_table_header, BDH_optional_arg=None, BDH_optional_val=None):
     '''
     Creates new sheets in the given excel workbook based on Option data stored in the given sheet_name.
 
@@ -51,20 +71,20 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
     #The sheet we want to get data from is set to the variable data_sheet
     data_sheet = wb.get_sheet_by_name(sheet_name)
     
-
-    #The cell in the sheet that contains the completion/termination date, as passed in by the function.
+    #The cell in the sheet that contains the start date, as passed in by the function.
     if type(data_sheet[sheet_end_date_cell].value) == int:
-        completion_date = dt.datetime.strptime(str(data_sheet[sheet_end_date_cell].value),'%Y%m%d').date()
+        start_date = dt.datetime.strptime(str(data_sheet[sheet_start_date_cell].value),'%Y%m%d').date()
     else:
-        completion_date= data_sheet[sheet_end_date_cell].value.date()
+        start_date= data_sheet[sheet_start_date_cell].value.date()
 
     #The cell in the sheet that contains the announcement date, as passed in by the function.
     if type(data_sheet[sheet_announce_date_cell].value) == int:
-        completion_date = dt.datetime.strptime(str(data_sheet[sheet_end_date_cell].value),'%Y%m%d').date()
+        announcement_date = dt.datetime.strptime(str(data_sheet[sheet_announce_date_cell].value),'%Y%m%d').date()
     else:
-        completion_date= data_sheet[sheet_end_date_cell].value.date()
+        announcement_date= data_sheet[sheet_announce_date_cell].value.date()
 
     total_rows = data_sheet.max_row
+    total_columns = data_sheet.max_column
 
     #counter to keep track of each sheet created
     sheet_count = 0
@@ -72,55 +92,61 @@ def update_option_contract_sheets(workbook_path, sheet_name, sheet_start_date_ce
     historic = historic_stock_mean_and_std(reference_wb_path=workbook_path, price_column_header='PX_LAST', header_start_row=data_header_row, date_0=dt.datetime.strptime(str(data_sheet[sheet_announce_date_cell].value),'%Y%m%d'))
     merger = merger_stock_mean_and_std(reference_wb_path=workbook_path, price_column_header='PX_LAST', header_start_row=data_header_row, date_0=dt.datetime.strptime(str(data_sheet[sheet_announce_date_cell].value),'%Y%m%d'))
 
-    #iterate through the rows of the data_sheet
-    #NOTE: THE SHEET IS SET UP SO THAT VALUES WE'RE INTERESTED IN START AT ROW 10
-    for (index, cell) in enumerate(data_sheet['A10:B{}'.format(total_rows)]):
+    #iterate through the columns of the data_sheet
+    for i in range(starting_col, total_columns+1, 2):
+
+        #iterate through the rows of the data_sheet
+        for j in range(starting_row, total_rows+1):
+            ticker_cell = data_sheet.cell(row=j, column=i).value
+            des_cell = data_sheet.cell(row=j, column=i+1).value
+            #check if the ticker and description cell does not = None
+            if ((ticker_cell != None) and (des_cell != None)):
+                #checks to see if the description cell value follows the pattern of an option description
+                if (re.match(OPTION_DESCRIPTION_PATTERN_INT, des_cell) or re.match(OPTION_DESCRIPTION_PATTERN_FLOAT, des_cell)) :
+
+                    #format_option_description() returns the following list:
+                    #[security_name, option_description, option_type, expiration_date, strike_price]
+                    option_data = format_option_description(ticker_cell, des_cell)
+
+                    #the number of days between the expiration and start date. 
+                    expiration_from_start = (option_data[3] - start_date).days
+                    #the number of days past the annoucement date and the 
+                    days_past_announcemt = (option_data[3]- announcement_date).days
+
+                    #import pdb; pdb.set_trace()
+                    #if the expiration date is less than 8 days after the start date or if the expiration date is 60 days paste the announcment date, do nothing.
+                    if (expiration_from_start < 8) or (days_past_announcemt > 60) :
+                        pass
+                        #otherwise, keep creating sheets
+                    else:
+                        #check to see if the stike is within 1.5 standard deviation of the historical and merger stock mean
+                        if ((is_in_range(num=option_data[-1], high=historic[0]+1.5*historic[1], low=historic[0]-1.5*historic[1])) or (is_in_range(num=option_data[-1], high=merger[0]+1.5*merger[1], low=merger[0]-1.5*merger[1]))):
+                            #creates a new sheet for the passed in workbook
+                            new_sheet = wb.create_sheet()
+                            #increment the sheet count by 1
+                            sheet_count +=1
+                            #'/' aren't allowed in excel sheet names, so we replace them with '-' if the name contains '/' 
+                            new_sheet.title = option_data[1].replace('/', '-')
+
+                            #zip creates a tuple pair for each item of the passed in lists. this tuple can then be appended to the sheet
+                            for data in zip(option_data_labels,option_data):
+                                new_sheet.append(data)
+
+                            #loop through every value of total_data_headers and add it to the worksheet at the specified data_header_row
+                            for (index, value) in enumerate(total_data_headers, start= 1) :
+                                new_sheet.cell(row = data_header_row,column = index ).value = value 
+
+                            #add the BDH formula to the sheet
+                            new_sheet.cell(row=data_header_row+1, column=2).value = abxl.add_option_BDH( security_name = option_data[0],
+                                                                                          fields = data_table_header, 
+                                                                                          start_date = data_sheet[sheet_start_date_cell].value,
+                                                                                          end_date = 'B4',
+                                                                                          optional_arg = BDH_optional_arg,
+                                                                                          optional_val = BDH_optional_val)
+                else:
+                    print('Not a valid option description. Could not create new workbook sheets for {}'.format(des_cell))
+                    continue
         
-        #checks to see if the cell value follows the pattern of an option description
-        if (re.match(OPTION_DESCRIPTION_PATTERN_INT, cell[1].value) or re.match(OPTION_DESCRIPTION_PATTERN_FLOAT, cell[1].value)) :
-
-            #format_option_description() returns the following list:
-            #[security_name, option_description, option_type, expiration_date, strike_price]
-            option_data = format_option_description(cell[0].value, cell[1].value)
-
-            #the number of days between the expiration and completion date. 
-            date_diff = (option_data[3] - completion_date).days
-
-            #if the expiration_date occurs 1.5 year after the completion_date, then stop creating sheets
-            if date_diff >= 547:
-                wb.save(workbook_path)
-                print('Found contracts past {}'.format(completion_date))
-                break
-                #otherwise, keep creating sheets
-            else:
-                #check to see if the stike is within 1.5 standard deviation of the historical and merger stock mean
-                if ((is_in_range(num=option_data[-1], high=historic[0]+1.5*historic[1], low=historic[0]-1.5*historic[1])) or (is_in_range(num=option_data[-1], high=merger[0]+1.5*merger[1], low=merger[0]-1.5*merger[1]))):
-                    #creates a new sheet for the passed in workbook
-                    new_sheet = wb.create_sheet()
-                    #increment the sheet count by 1
-                    sheet_count +=1
-                    #/' aren't allowed in excel sheet names, so we replace them with '-' if the name contains '/' 
-                    new_sheet.title = option_data[1].replace('/', '-')
-
-                    #zip creates a tuple pair for each item of the passed in lists. this tuple can then be appended to the sheet
-                    for data in zip(option_data_labels,option_data):
-                        new_sheet.append(data)
-
-                    #loop through every value of total_data_headers and add it to the worksheet at the specified data_header_row
-                    for (index, value) in enumerate(total_data_headers, start= 1) :
-                        new_sheet.cell(row = data_header_row,column = index ).value = value 
-
-                    #add the BDH formula to the sheet
-                    new_sheet['B{}'.format(data_header_row+1)] = abxl.add_option_BDH( security_name = option_data[0],
-                                                                                  fields = data_table_header, 
-                                                                                  start_date = data_sheet[sheet_start_date_cell].value,
-                                                                                  end_date = 'B4',
-                                                                                  optional_arg = BDH_optional_arg,
-                                                                                  optional_val = BDH_optional_val)
-        else:
-            print('Not a valid option description. Could not create new workbook sheets for {}'.format(cell[1].value))
-            continue
-    
     #if the loop ends without finding contracts 2 months past the completion/termination date, save the workbook      
     wb.save(workbook_path) 
     print('Saving the workbook with {} new tabs'.format(sheet_count)) 
