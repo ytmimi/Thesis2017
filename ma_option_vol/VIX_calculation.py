@@ -23,7 +23,6 @@ class Option_Contract_Data():
 		else:
 			self.px_mid = round((self.px_ask + self.px_bid)/2,5)
 
-
 	def set_px_mid(self, value):
 		'''
 		sets the mid price for the option
@@ -52,7 +51,6 @@ class Near_Term():
 		self.F = self.forward_index_level()
 		#both the call and the put list will contain the same strikes, in this case the call list is used to determin k0, the stirk immideatily below F
 		self.k0 = self.find_k0(option_list= self.option_dict['call'])
-		#list of (strike_price, midpoint) tuples
 		self.non_zero_bid_list = self.create_calculation_list()
 		self.variance = self.calculate_variance()
 	
@@ -228,6 +226,7 @@ class Near_Term():
 
 		return combined_option_list
 
+
 	def remove_zero_bid(self, option_list):
 		'''
 		Goes through an option list and addes non zero bid options to a new list.  
@@ -357,6 +356,17 @@ class VIX_Calculation(object):
 		Calculates the VIX for a given day based on the Near_Term and Next_Term options chains
 		'''
 		return 100 * self.Near_Next_30_day_weighted_average()
+
+
+
+
+def calculate_vix(near_term_dict, next_term_dict, R1, R2, current_date, current_time='4:00 PM', near_settlement_time='4:00 PM', next_settlement_time='4:00 PM'):
+	'''
+	Given the arguments for Near_Term and Next_Term objects, the VIX calculation is returned
+	'''
+	near_term = Near_Term(option_dict= near_term_dict, risk_free_rate= R1, current_date= current_date, current_time=current_time, settlement_time=near_settlement_time)
+	next_term = Next_Term(option_dict= next_term_dict, risk_free_rate= R2, current_date= current_date, current_time=current_time, settlement_time=next_settlement_time)
 	
+	return VIX_Calculation(Near_Term=near_term, Next_Term=next_term).VIX
 
 
