@@ -663,5 +663,48 @@ def add_extra_sheets(reference_wb_path, sheet_name, ticker_column, description_c
 
 
 
+def update_workbook_days_till_expiration(reference_wb_path, data_start_row, date_col, calculation_col):
+    '''
+    Updates each option sheet in the workbook to contain the days till expiration for that sheets option
+    '''
+    #loads the workbook
+    wb = openpyxl.load_workbook(reference_wb_path)
+    #converts date_col and calculation_col if passed as letters
+    date_col=convert_to_numbers(date_col)
+    calculation_col = convert_to_numbers(calculation_col)
+    #loop through all the sheets in the workbook
+    for (index, sheet_name) in enumerate(wb.get_sheet_names()):
+        #if the sheet_name matches an option sheet:
+        if re.match(OPTION_SHEET_PATTERN_INT, sheet_name) or re.match(OPTION_SHEET_PATTERN_FLOAT, sheet_name):
+            #get the sheet
+            sheet = wb.get_sheet_by_name(sheet_name)
+            update_sheet_days_till_expiration(reference_sheet= sheet, data_start_row= data_start_row, 
+                                                date_col= date_col, calculation_col= calculation_col)
+    #save changes
+    wb.save(reference_wb_path)
+ 
 
+def update_sheet_days_till_expiration(reference_sheet, data_start_row, date_col, calculation_col):
+    '''
+    loops over each row containing option data and returns the days till expiration in the designated column
+    '''
+    #sets the total rows of the worksheet
+    total_rows = reference_sheet.max_row
+    #sets the expiratioin date
+    exp_date = reference_sheet['B4'].value
+    #sets the header of the column
+    reference_sheet.cell(row=data_start_row-1, column=calculation_col).value = 'DTE'
+    #loops through each row from data_start_row till total_rows
+    for i in range(data_start_row, total_rows+1):
+        if reference_sheet.cell(row=i, column=date_col).value == None:
+            break
+        else:
+            curr_date = reference_sheet.cell(row=i, column=date_col).value
+            reference_sheet.cell(row=i, column=calculation_col).value = days_till_expiration(start_date=curr_date, 
+                                                                                            expiration_date=exp_date)
 
+def days_till_expiration(start_date, expiration_date):
+    '''
+    Given an expiration date, and a a starting date, the days to expiration is calculated
+    '''
+    return (expiration_date-start_date).days
