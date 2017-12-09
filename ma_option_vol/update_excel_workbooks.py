@@ -1,11 +1,12 @@
 import openpyxl
+import os
 import datetime as dt
 import re
 from statistics import mean, stdev
 from math import ceil, floor
 import add_bloomberg_excel_functions as abxl
 from CONSTANTS import ( OPTION_DESCRIPTION_PATTERN_INT, OPTION_DESCRIPTION_PATTERN_FLOAT, OPTION_SHEET_PATTERN_INT, OPTION_SHEET_PATTERN_FLOAT,
-                        STOCK_SHEET_PATTERN)
+                        STOCK_SHEET_PATTERN, OUTPUT_DIR)
 
 def update_sheet_with_BDP_description(workbook_path, sheet_name, starting_col, starting_row):
     '''
@@ -19,7 +20,7 @@ def update_sheet_with_BDP_description(workbook_path, sheet_name, starting_col, s
     total_rows = sheet.max_row
     total_columns = sheet.max_column
     
-    #make this a dictionary, where the key is the ticker
+    #list to keep track of tickers that have already been used
     unique_ticker = []
     #iterate over each column:
     for i in range(starting_col, total_columns+1, 2):
@@ -38,6 +39,9 @@ def update_sheet_with_BDP_description(workbook_path, sheet_name, starting_col, s
     
     # #saves the workbook
     wb.save(workbook_path)
+    wb_name = workbook_path.split('/')[-1]
+    data = '{} contracts sampled for {}\n'.format(len(unique_ticker), wb_name)
+    store_data_to_txt_file(file_name='option_des', data=data)
 
 
 def update_option_contract_sheets(workbook_path, sheet_name,starting_col,starting_row, sheet_start_date_cell, sheet_announce_date_cell, sheet_end_date_cell,  data_header_row, data_table_index, data_table_header, BDH_optional_arg=None, BDH_optional_val=None):
@@ -142,9 +146,11 @@ def update_option_contract_sheets(workbook_path, sheet_name,starting_col,startin
                     print('Not a valid option description. Could not create new workbook sheets for {}'.format(des_cell))
                     continue
         
-    #if the loop ends without finding contracts 2 months past the completion/termination date, save the workbook      
-    wb.save(workbook_path) 
-    print('Saving the workbook with {} new tabs'.format(sheet_count)) 
+    #save the workbook
+    wb.save(workbook_path)
+    wb_name = workbook_path.split('/')[-1] 
+    data='Saving workbook with {} new tabs: {} \n'.format(sheet_count,wb_name)
+    store_data_to_txt_file(file_name='option_sheets', data=data)
  
 
 def format_option_description(security_name, option_description):
@@ -236,22 +242,45 @@ def update_read_data_only(file_path):
     wb.save(file_path)
 
 
-def delet_workbook_sheets(workbook_path):
+def store_data_to_txt_file(file_name, data,file_path=OUTPUT_DIR):
+    '''
+    Given a file path, output data from a function is stored
+    '''
+    #full file path
+    complete_path = '{}/{}.{}'.format(file_path,file_name,'txt')
+    #check if the file exists
+    if os.path.exists(file_path):
+        #if the file exisist open it to append
+        f = open(complete_path, 'a')
+        f.write(data)
+        f.close()
+    
+    #else creat the file_path
+    else:
+        os.makedirs(file_path, exist_ok=False)
+        f = open(complete_path, 'w')
+        f.write(data)
+        f.close()
+
+def delet_workbook_option_sheets(workbook_path):
+    '''
+    Given the file path to a workbook, all the option sheets are deleted
+    '''
     wb = openpyxl.load_workbook(workbook_path)
     start_sheet_num = len(wb.get_sheet_names())
-    #if there is more than one sheet in the workook
-    if start_sheet_num > 1:
-        #loop through every sheet name in the workbook except the first sheet
-        for (index,sheet) in enumerate(wb.get_sheet_names()[1:]):
-            #if the length of the sheet list ==1 stop deleting cells
-            if len(wb.get_sheet_names()) ==1:
-                break
-            else:
-                wb.remove_sheet(wb.get_sheet_by_name(sheet))
+    #set the active sheet in the workbook to the first sheet:
+    wb.active = 0
+    for (index,sheet) in enumerate(wb.get_sheet_names()):
+        #if the sheet is an option sheet
+        if(re.match(OPTION_SHEET_PATTERN_INT, sheet)) or (re.match(OPTION_SHEET_PATTERN_FLOAT, sheet)):
+            wb.remove_sheet(wb.get_sheet_by_name(sheet))
 
     end_sheet_num = len(wb.get_sheet_names())
     deleted_sheet_num = start_sheet_num - end_sheet_num 
-    print('Deleted {} sheets from the Workbook'.format(deleted_sheet_num))
+    wb_name = workbook_path.split('/')[-1]
+    data ='Deleted {} sheets from {} \n'.format(deleted_sheet_num, wb_name)
+    
+    store_data_to_txt_file(file_name= 'deleted_sheets', data= data)
     wb.save(workbook_path)
 
 
@@ -364,7 +393,10 @@ def update_stock_price_sheet(workbook_path, sheet_name, stock_sheet_index, sheet
                                                                             optional_val = BDH_optional_val)
     #saves the newly added sheet to the workbook.
     wb.save(workbook_path)
-    print('Adding stock sheet to the Workbook...')
+    wb_name = workbook_path.split('/')[-1]
+    data = 'Added {} sheet to workbook: {}\n'.format(ticker, wb_name)
+    store_data_to_txt_file(file_name= 'stock_sheets', data= data)
+
 
 
 def update_workbook_average_column(reference_wb_path, column_header, header_row, data_start_row, ignore_sheet_list=[]):
@@ -700,6 +732,6 @@ def update_sheet_days_till_expiration(reference_sheet, data_start_row, date_col,
 
 def days_till_expiration(start_date, expiration_date):
     '''
-    Given an expiration date, and a a starting date, the days to expiration is calculated
+    Given an expiration date and a a starting date, the days to expiration is calculated
     '''
     return (expiration_date-start_date).days
