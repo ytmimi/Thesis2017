@@ -1,7 +1,7 @@
 import re
 import openpyxl
 import datetime as dt
-from update_excel_workbooks import find_index_0
+from update_excel_workbooks import find_index_0, store_data_to_txt_file
 from wallstreet.blackandscholes import BlackandScholes as BS
 from CONSTANTS import (TREASURY_WORKSHEET, TOTAL_TREASURY_SHEET_ROWS, TREASURY_DATA_START_ROW, DATE_COLUMN, THREE_MONTH_COLUMN, SIX_MONTH_COLUMN,
 	TWELVE_MONTH_COLUMN, OPTION_SHEET_PATTERN_INT,OPTION_SHEET_PATTERN_FLOAT,STOCK_SHEET_PATTERN )
@@ -181,7 +181,8 @@ def calculate_workbook_iv(workbook_path, sheet_date_column, sheet_price_column, 
 								data_start_row=9, data_end_row=stock_sheet_rows, three_month=False, six_month=False, twelve_month=True)
 	#save the workbook:
 	wb.save(workbook_path)
-	print('Done calculating IVOL. Saving {}...'.format(workbook_path.split('/')[-1]))
+	data ='Done calculating IVOL for {}\n'.format(workbook_path.split('/')[-1])
+	store_data_to_txt_file(file_name='IVOL_calculation', data=data)
  
 
 
