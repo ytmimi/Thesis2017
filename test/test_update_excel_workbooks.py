@@ -22,18 +22,18 @@ import update_excel_workbooks as uxlw
 
 #test the update_options_contract_sheets function.
 #adds a new sheet for each option contract listed in the Options Chain sheet and pulls bloomberg data for each field listed in 
-uxlw.update_option_contract_sheets(workbook_path=Allegran_path, 
-									sheet_name='Options Chain',
-									starting_col=1,
-									starting_row=10,
-									sheet_start_date_cell='B7',
-									sheet_announce_date_cell='B8',
-									sheet_end_date_cell='B9',
-									data_header_row=8,
-									data_table_index=['INDEX','DATE'],
-									data_table_header=['PX_LAST','PX_BID','PX_ASK','PX_VOLUME','OPEN_INT', 'IVOL'],
-									BDH_optional_arg=['Days', 'Fill'],
-									BDH_optional_val=['T','0'])
+# uxlw.update_option_contract_sheets(workbook_path=Allegran_path, 
+# 									sheet_name='Options Chain',
+# 									starting_col=1,
+# 									starting_row=10,
+# 									sheet_start_date_cell='B7',
+# 									sheet_announce_date_cell='B8',
+# 									sheet_end_date_cell='B9',
+# 									data_header_row=8,
+# 									data_table_index=['INDEX','DATE'],
+# 									data_table_header=['PX_LAST','PX_BID','PX_ASK','PX_VOLUME','OPEN_INT', 'IVOL'],
+# 									BDH_optional_arg=['Days', 'Fill'],
+# 									BDH_optional_val=['T','0'])
 
 #deletes all worksheets in the workbook except the first worksheet
 #uxlw.delet_workbook_sheets(NextEra_test_path) #change back to test_path after testing NextEra sheet
