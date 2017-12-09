@@ -3,13 +3,15 @@ import datetime as dt
 import os
 #imports the add_bloomberg_excel_functions from the current module
 import add_bloomberg_excel_functions as abxl
+from update_excel_workbooks import store_data_to_txt_file
+from CONSTANTS import ACQUIRER_DIR, TARGET_DIR, MERGER_SAMPLE
 
 class Create_Company_Workbooks():
     
 
-    def __init__(self, source_file, source_sheet_name, target_path, acquirer_path):
-        self.source_file = source_file
+    def __init__(self, source_sheet_name, source_file=MERGER_SAMPLE, target_path=TARGET_DIR, acquirer_path=ACQUIRER_DIR):
         self.source_sheet_name = source_sheet_name
+        self.source_file = source_file
         self.target_path = target_path
         self.acquirer_path = acquirer_path
 
@@ -28,7 +30,6 @@ class Create_Company_Workbooks():
                 #creates the new workbooks
                 self.new_target_workbook(row_data=row, target_path= self.target_path)
                 self.new_acquirer_workbook(row_data=row, acquirer_path= self.acquirer_path)
-        print('\nDone creating company files.')
 
 
     def new_target_workbook(self,row_data, target_path):
@@ -141,7 +142,11 @@ class Create_Company_Workbooks():
             #joins the path with the file Name 'file_name_start_date.file_extension', replacing / with _ to create valid excel file names
             final_path = '/'.join([workbook_path,'{}_{}.{}'.format(file_name.replace('/','_'),start_date_str , file_extension)])
             #save the worksheet
-            new_workbook.save(final_path)    
+            new_workbook.save(final_path)
+            if workbook_path == TARGET_DIR:
+                store_data_to_txt_file(file_name='target_workbooks', data='Created {}\n'.format(file_name.replace('/', '_')))
+            elif workbook_path == ACQUIRER_DIR: 
+                store_data_to_txt_file(file_name='acquirer_workbooks', data='Created {}\n'.format(file_name.replace('/', '_')))
         else:
             #if the path doesn't exist, create it
             os.makedirs(workbook_path, exist_ok=False)
@@ -150,6 +155,11 @@ class Create_Company_Workbooks():
             final_path = '/'.join([workbook_path,'{}_{}.{}'.format(file_name.replace('/','_'),start_date_str , file_extension)])
             #save the worksheet
             new_workbook.save(final_path)
+            if workbook_path == TARGET_DIR:
+                store_data_to_txt_file(file_name='target_workbooks', data='Created {}\n'.format(file_name.replace('/', '_')))
+            elif workbook_path == ACQUIRER_DIR: 
+                store_data_to_txt_file(file_name='acquirer_workbooks', data='Created {}\n'.format(file_name.replace('/', '_')))
+    
 
     def adjust_to_weekday(self, date):
         '''
