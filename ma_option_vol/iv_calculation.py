@@ -58,7 +58,7 @@ def is_negative(num):
 		return False
 
 
-def calculate_sheet_iv(stock_sheet, option_sheet,sheet_date_column,sheet_price_column,data_start_row,data_end_row, three_month_data_col=4,six_month_data_col=5, twelve_month_data_col=6 , three_month=True, six_month=False, twelve_month=False):
+def calculate_sheet_iv(stock_sheet, option_sheet,sheet_date_column,sheet_price_column,data_start_row,data_end_row, starting_rf_index, three_month_data_col=4,six_month_data_col=5, twelve_month_data_col=6 , three_month=True, six_month=False, twelve_month=False):
 	'''
 	Given a stock_sheet, and an option_sheet implied volatility is calculated for each row of the option_sheet that contains price data
 	'''
@@ -67,9 +67,6 @@ def calculate_sheet_iv(stock_sheet, option_sheet,sheet_date_column,sheet_price_c
 	expiration_date= option_sheet['B4'].value
 	strike_price= option_sheet['B5'].value
 	
-	#sets the starting index for the TREASURY_WORKSHEET
-	starting_rf_index= find_starting_risk_free_rate_index(start_date=option_sheet['B9'].value)
-
 	#iterate through each row of the option_sheet
 	for (index, i) in enumerate(range(data_start_row, data_end_row+1)):
 		#gets the value in the date column
@@ -150,6 +147,11 @@ def calculate_workbook_iv(workbook_path, sheet_date_column, sheet_price_column, 
 			stock_sheet = wb.get_sheet_by_name(sheet_name)
 			#gets the total rows from the stock sheet
 			stock_sheet_rows = stock_sheet.max_row
+			#sets the starting index for the TREASURY_WORKSHEET
+			starting_rf_index= find_starting_risk_free_rate_index(start_date=stock_sheet['B9'].value)
+			wb_name = workbook_path.split('/')[-1]
+			data = 'Row {} is the starting rf index for {}\n'.format(starting_rf_index, wb_name)
+			store_data_to_txt_file(file_name='rf_index', data=data)
 
 		#if the sheet_name matches either of the OPTION_SHEET_PATTERNS'
 		elif re.match(OPTION_SHEET_PATTERN_FLOAT, sheet_name) or re.match(OPTION_SHEET_PATTERN_INT,sheet_name):
@@ -162,7 +164,7 @@ def calculate_workbook_iv(workbook_path, sheet_date_column, sheet_price_column, 
 				#calculates the implied volatility for each row of the given sheet
 				calculate_sheet_iv(stock_sheet=stock_sheet, option_sheet=option_sheet, sheet_date_column=sheet_date_column,sheet_price_column=sheet_price_column,
 								three_month_data_col=three_month_data_col,six_month_data_col=six_month_data_col , twelve_month_data_col=twelve_month_data_col, 
-								data_start_row=9, data_end_row=stock_sheet_rows, three_month=True, six_month=False, twelve_month=False)
+								data_start_row=9, data_end_row=stock_sheet_rows,starting_rf_index=starting_rf_index, three_month=True, six_month=False, twelve_month=False)
 
 			if six_month:
 				#set the column header
@@ -170,7 +172,7 @@ def calculate_workbook_iv(workbook_path, sheet_date_column, sheet_price_column, 
 				#calculates the implied volatility for each row of the given sheet
 				calculate_sheet_iv(stock_sheet=stock_sheet, option_sheet=option_sheet, sheet_date_column=sheet_date_column,sheet_price_column=sheet_price_column,
 								three_month_data_col=three_month_data_col,six_month_data_col=six_month_data_col , twelve_month_data_col=twelve_month_data_col, 
-								data_start_row=9, data_end_row=stock_sheet_rows, three_month=False, six_month=True, twelve_month=False)
+								data_start_row=9, data_end_row=stock_sheet_rows,starting_rf_index=starting_rf_index, three_month=False, six_month=True, twelve_month=False)
 
 			if twelve_month:
 				#set the column header 
@@ -178,7 +180,7 @@ def calculate_workbook_iv(workbook_path, sheet_date_column, sheet_price_column, 
 				#calculates the implied volatility for each row of the given sheet
 				calculate_sheet_iv(stock_sheet=stock_sheet, option_sheet=option_sheet, sheet_date_column=sheet_date_column,sheet_price_column=sheet_price_column,
 								three_month_data_col=three_month_data_col,six_month_data_col=six_month_data_col , twelve_month_data_col=twelve_month_data_col, 
-								data_start_row=9, data_end_row=stock_sheet_rows, three_month=False, six_month=False, twelve_month=True)
+								data_start_row=9, data_end_row=stock_sheet_rows, starting_rf_index=starting_rf_index, three_month=False, six_month=False, twelve_month=True)
 	#save the workbook:
 	wb.save(workbook_path)
 	data ='Done calculating IVOL for {}\n'.format(workbook_path.split('/')[-1])
