@@ -24,7 +24,7 @@ import generate_sorted_options_workbooks as gsow
 
 #test the group_contracts_by_strik() function
 test_wb = openpyxl.load_workbook(test_path)
-# contracts1 = gsow.group_contracts_by_strike(reference_wb = test_wb)
+contracts1 = gsow.group_contracts_by_strike(reference_wb = test_wb)
 # print(contracts1['call'].keys())
 # print(contracts1['put'].keys())
 # print('\n')
@@ -32,7 +32,7 @@ test_wb = openpyxl.load_workbook(test_path)
 # for (index, key) in enumerate(contracts1['call']):
 # 	if index > 4:
 # 		break
-# 	print(key, contracts1['call'][key])
+# 	print(key, len(contracts1['call'][key]))
 # print('\n')
 # for (index, key) in enumerate(contracts1['put']):
 # 	if index > 4:
@@ -40,15 +40,15 @@ test_wb = openpyxl.load_workbook(test_path)
 # 	print(key, contracts1['put'][key])
 
 contracts2 = gsow.group_contracts_by_expiration(reference_wb = test_wb)
-print(contracts2['call'].keys())
+print(list(contracts2['call'].keys()))
 print(contracts2['put'].keys())
 # print('\n')
 # #prints a sample of the list values stored in each key
 for (index, key) in enumerate(contracts2['call']):
 	if index > 4:
 		break
-	print(key, contracts2['call'][key])
-# print('\n')
+	print('Expiration date: {} Contracts sampled: {}'.format(key, len(contracts2['call'][key])))
+print('\n')
 # for (index, key) in enumerate(contracts2['put']):
 # 	if index > 4:
 # 		break
@@ -74,6 +74,23 @@ for (index, key) in enumerate(contracts2['call']):
 # gsow.create_sorted_workbooks(reference_wb_path= test_path2, header_start_row=8,
 # 						data_column=['C','E'], index_column=['A','B'],
 # 						sort_by_strike=False, sort_by_expiration=False)
+
+
+#the sort_expiration_dates() function
+# test_list = ['01-15-16', '09-18-15', '02-20-15', '03-20-15', '06-19-15','12-20-14', '01-17-15']
+# print(test_list)
+# expected_sort = ['12-20-14', '01-17-15', '02-20-15', '03-20-15', '06-19-15', '09-18-15', '01-15-16']
+# sorted_list = gsow.sort_expiration_dates(test_list)
+# print(sorted_list)
+# print(expected_sort)
+
+#the sort_strike_prices() function
+# test_list = ['C22', 'C34', 'C5', 'C17', 'C50', 'C25', 'C3']
+# print(test_list)
+# expected_sort = ['C3','C5','C17','C22','C25','C34','C50']
+# sorted_list = gsow.sort_strike_prices(test_list)
+# print(sorted_list)
+# print(expected_sort)
 
 
 
