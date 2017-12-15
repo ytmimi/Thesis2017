@@ -128,7 +128,7 @@ class Create_Company_Workbooks():
 
 
     def get_company_options_tickers(self,reference_sheet, start_date, announcement_date, row, start_column, interval, ticker_cell, type_cell):
-        #loop through and call the BDS function every 3 months until a month past the announcemnt date
+        #loop through and call the BDS function while to start_date+the interval is less than 1 months past the announcement date
         while start_date < (announcement_date + dt.timedelta(days=30)):
             reference_sheet.cell(row=row,column=start_column).value = abxl.add_BDS_OPT_CHAIN(ticker_cell=ticker_cell,
                                                                 type_cell=type_cell, 
@@ -136,29 +136,32 @@ class Create_Company_Workbooks():
             start_date += dt.timedelta(days=interval)
             start_column +=2
 
+
     def save_new_workbook(self,new_workbook,workbook_path, file_name, start_date_str, file_extension):
         #checks to see if the given workbook_path exists
         if os.path.exists(workbook_path):
             #joins the path with the file Name 'file_name_start_date.file_extension', replacing / with _ to create valid excel file names
-            final_path = '/'.join([workbook_path,'{}_{}.{}'.format(file_name.replace('/','_'),start_date_str , file_extension)])
+            file_name_and_extension='{}_{}.{}'.format(file_name.replace('/','_'),start_date_str , file_extension)
+            final_path = '/'.join([workbook_path,file_name_and_extension])
             #save the worksheet
             new_workbook.save(final_path)
             if workbook_path == TARGET_DIR:
-                store_data_to_txt_file(file_name='target_workbooks', data='Created {}\n'.format(file_name.replace('/', '_')))
+                store_data_to_txt_file(file_name='target_workbooks', data='Created {}\n'.format(file_name_and_extension))
             elif workbook_path == ACQUIRER_DIR: 
-                store_data_to_txt_file(file_name='acquirer_workbooks', data='Created {}\n'.format(file_name.replace('/', '_')))
+                store_data_to_txt_file(file_name='acquirer_workbooks', data='Created {}\n'.format(file_name_and_extension))
         else:
             #if the path doesn't exist, create it
             os.makedirs(workbook_path, exist_ok=False)
             print('Generating file path: {}'.format(workbook_path))
             #joins the path with the file Name 'file_name_start_date.file_extension', replacing / with _ to create valid excel file names
-            final_path = '/'.join([workbook_path,'{}_{}.{}'.format(file_name.replace('/','_'),start_date_str , file_extension)])
+            file_name_and_extension='{}_{}.{}'.format(file_name.replace('/','_'),start_date_str , file_extension)
+            final_path = '/'.join([workbook_path,file_name_and_extension])
             #save the worksheet
             new_workbook.save(final_path)
             if workbook_path == TARGET_DIR:
-                store_data_to_txt_file(file_name='target_workbooks', data='Created {}\n'.format(file_name.replace('/', '_')))
+                store_data_to_txt_file(file_name='target_workbooks', data='Created {}\n'.format(file_name_and_extension))
             elif workbook_path == ACQUIRER_DIR: 
-                store_data_to_txt_file(file_name='acquirer_workbooks', data='Created {}\n'.format(file_name.replace('/', '_')))
+                store_data_to_txt_file(file_name='acquirer_workbooks', data='Created {}\n'.format(file_name_and_extension))
     
 
     def adjust_to_weekday(self, date):
