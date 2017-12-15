@@ -1,7 +1,8 @@
 import openpyxl
+import datetime as dt
 import os
 import re
-from update_excel_workbooks import convert_to_numbers, copy_data
+from update_excel_workbooks import convert_to_numbers, copy_data, store_data_to_txt_file
 from CONSTANTS import CALL_DESIGNATION_PATTERN, PUT_DESIGNATION_PATTERN
 
 
@@ -74,7 +75,7 @@ def group_contracts_by_expiration(reference_wb):
 		    options_contracts['put'].setdefault(expiration, [])
 		    options_contracts['put'][expiration].append(contract)
 
-	#finally return the options_contracts dictionary
+    #finally return the options_contracts dictionary
 	return options_contracts
 
 
@@ -159,93 +160,100 @@ def create_sorted_sheet(new_workbook, reference_wb, new_sheet_title, reference_s
 
 
 def create_sorted_workbooks(reference_wb_path, header_start_row, data_column, index_column, sort_by_strike=True, sort_by_expiration=False):
-	'''
-	Creates a new workbook, containing sorted data in each of its sheets
+    '''
+    Creates a new workbook, containing sorted data in each of its sheets
 
-	reference_wb_path   should be the path to the workbook that data will be taken from
+    reference_wb_path   should be the path to the workbook that data will be taken from
 
-	header_start_row    is a variable that will be passed to the call of create_sorted_sheet()
+    header_start_row    is a variable that will be passed to the call of create_sorted_sheet()
 
-	data_column         is a variable that will be passed to the call of create_sorted_sheet()
+    data_column         is a variable that will be passed to the call of create_sorted_sheet()
 
-	index_column        is a variable that will be passed to the call of create_sorted_sheet()
+    index_column        is a variable that will be passed to the call of create_sorted_sheet()
 
-	sort_by_strike		A boolean that determins weather the new options workbook will be sorted by strike, defaults to True
+    sort_by_strike		A boolean that determins weather the new options workbook will be sorted by strike, defaults to True
 
-	sort_by_expiration	A boolean that determins weather the new options workbook will be sorted by expiration, defaults to False
-	'''
-	#initial check to ensure that the user has designated one sort method, but not both. By defualt sort_by_stike is True.
-	if(sort_by_strike and sort_by_expiration):
-		return print('Error: Choose either to sort by strike or by expiration')
+    sort_by_expiration	A boolean that determins weather the new options workbook will be sorted by expiration, defaults to False
+    '''
+    #initial check to ensure that the user has designated one sort method, but not both. By defualt sort_by_stike is True.
+    if(sort_by_strike and sort_by_expiration):
+        return print('Error: Choose either to sort by strike or by expiration')
 
-	elif((not sort_by_strike) and (not sort_by_expiration)):
-		return print('Error: Choose to sort by strike or by expiration')
+    elif((not sort_by_strike) and (not sort_by_expiration)):
+        return print('Error: Choose to sort by strike or by expiration')
 
-	#loads the reference workbook
-	reference_wb = openpyxl.load_workbook(reference_wb_path)
+    #loads the reference workbook
+    reference_wb = openpyxl.load_workbook(reference_wb_path)
 
-	#formats the data_column, and index_column in case they were imput as letters.
-	data_column = convert_to_numbers(data_column)
-	index_column = convert_to_numbers(index_column)
+    #formats the data_column, and index_column in case they were imput as letters.
+    data_column = convert_to_numbers(data_column)
+    index_column = convert_to_numbers(index_column)
 
-	#creats the new workbooks.
-	new_call_wb = openpyxl.Workbook()
-	new_put_wb = openpyxl.Workbook()
+    #creats the new workbooks.
+    new_call_wb = openpyxl.Workbook()
+    new_put_wb = openpyxl.Workbook()
 
-	#adds the stock sheet to the new_call_wb.
-	create_sorted_sheet(new_workbook =new_call_wb, reference_wb= reference_wb,
-						new_sheet_title= 'Stock Price', reference_sheet_list=[reference_wb.get_sheet_names()[1]],
-						data_start_row= header_start_row, data_column= [data_column[0]],
-						index_column= index_column)
+    #adds the stock sheet to the new_call_wb.
+    create_sorted_sheet(new_workbook =new_call_wb, reference_wb= reference_wb,
+                        new_sheet_title= 'Stock Price', reference_sheet_list=[reference_wb.get_sheet_names()[1]],
+                        data_start_row= header_start_row, data_column= [data_column[0]],
+                        index_column= index_column)
 
-	#adds the stock sheet to the new_put_wb.
-	create_sorted_sheet(new_workbook =new_put_wb, reference_wb= reference_wb,
-						new_sheet_title= 'Stock Price', reference_sheet_list=[reference_wb.get_sheet_names()[1]],
-						data_start_row= header_start_row, data_column= [data_column[0]],
-						index_column= index_column)
+    #adds the stock sheet to the new_put_wb.
+    create_sorted_sheet(new_workbook =new_put_wb, reference_wb= reference_wb,
+                        new_sheet_title= 'Stock Price', reference_sheet_list=[reference_wb.get_sheet_names()[1]],
+                        data_start_row= header_start_row, data_column= [data_column[0]],
+                        index_column= index_column)
 
-	#sets the value of the variable contracts based on the type of sort designated
-	if sort_by_strike:
-		#stores the outpuf of group_contracts_by_strike(), which is a nested dictionary that looks similar to:
-		#{ {'call':{'C55':['List of contract sheets'], ....}, {'put':{'P55':['List of contract sheets']} } } }
-		contracts=group_contracts_by_strike(reference_wb= reference_wb)
+    #sets the value of the variable contracts based on the type of sort designated
+    if sort_by_strike:
+        #stores the outpuf of group_contracts_by_strike(), which is a nested dictionary that looks similar to:
+        #{ {'call':{'C55':['List of contract sheets'], ....}, {'put':{'P55':['List of contract sheets']} } } }
+        contracts=group_contracts_by_strike(reference_wb= reference_wb)
+        #creates a list of sorted keys for both the call and the put dictionary
+        sorted_call_list = sort_strike_prices(list(contracts['call'].keys()))
+        sorted_put_list = sort_strike_prices(list(contracts['put'].keys()))
 
-	elif sort_by_expiration:
-		#stores the outpuf of group_contracts_by_expiration(), which is a nested dictionary that looks similar to:
-		#{ {'call':{'03-20-15':['List of contract sheets'], ....}, {'put':{'03-20-15':['List of contract sheets']} } } }
-		contracts = group_contracts_by_expiration(reference_wb= reference_wb)
+    elif sort_by_expiration:
+        #stores the outpuf of group_contracts_by_expiration(), which is a nested dictionary that looks similar to:
+        #{ {'call':{'03-20-15':['List of contract sheets'], ....}, {'put':{'03-20-15':['List of contract sheets']} } } }
+        contracts = group_contracts_by_expiration(reference_wb= reference_wb)
+        #creates a list of sorted keys for both the call and the put dictionary
+        sorted_call_list = sort_expiration_dates(list(contracts['call'].keys()))
+        sorted_put_list = sort_expiration_dates(list(contracts['put'].keys()))
 
-	#iterate over all the keys in the 'call' dictionary stored in contracts 
-	for (index, key) in enumerate(contracts['call']):
-		#create a sorted sheet in the new workbook for every strike price
-		create_sorted_sheet(new_workbook =new_call_wb, reference_wb= reference_wb,
-							new_sheet_title= key, reference_sheet_list=contracts['call'][key],
-							data_start_row= header_start_row, data_column= data_column,
-							index_column= index_column)
 
-	#iterate over all the keys in the 'put' dictionary stored in contracts 
-	for (index, key) in enumerate(contracts['put']):
-		#create a sorted sheet in the new workbook for every strike price
-		create_sorted_sheet(new_workbook =new_put_wb, reference_wb= reference_wb,
-							new_sheet_title= key, reference_sheet_list=contracts['put'][key],
-							data_start_row= header_start_row, data_column= data_column,
-							index_column= index_column)
+    #iterate over all the keys in the 'call' dictionary stored in contracts 
+    for (index, key) in enumerate(sorted_call_list):
+        #create a sorted sheet in the new workbook for every strike price
+        create_sorted_sheet(new_workbook =new_call_wb, reference_wb= reference_wb,
+                            new_sheet_title= key, reference_sheet_list=contracts['call'][key],
+                            data_start_row= header_start_row, data_column= data_column,
+                            index_column= index_column)
 
-	if sort_by_strike:
-		#save new_call_wb
-		save_new_workbook(new_workbook=new_call_wb, workbook_path= reference_wb_path,
-						new_folder='call_by_strike', append_file_name='call_by_strike')
-		#save new_put_wb
-		save_new_workbook(new_workbook= new_put_wb, workbook_path= reference_wb_path,
-						new_folder= 'put_by_strike', append_file_name='put_by_strike')
+    #iterate over all the keys in the 'put' dictionary stored in contracts 
+    for (index, key) in enumerate(sorted_put_list):
+        #create a sorted sheet in the new workbook for every strike price
+        create_sorted_sheet(new_workbook =new_put_wb, reference_wb= reference_wb,
+                            new_sheet_title= key, reference_sheet_list=contracts['put'][key],
+                            data_start_row= header_start_row, data_column= data_column,
+                            index_column= index_column)
 
-	elif sort_by_expiration:
-		#save new_call_wb
-		save_new_workbook(new_workbook=new_call_wb, workbook_path= reference_wb_path,
-							new_folder='call_by_expiration', append_file_name='call_by_expiration')
-		#save new_put_wb
-		save_new_workbook(new_workbook= new_put_wb, workbook_path= reference_wb_path,
-						new_folder= 'put_by_expiration', append_file_name='put_by_expiration')
+    if sort_by_strike:
+        #save new_call_wb
+        save_new_workbook(new_workbook=new_call_wb, workbook_path= reference_wb_path,
+                            new_folder='call_by_strike', append_file_name='call_by_strike')
+        #save new_put_wb
+        save_new_workbook(new_workbook= new_put_wb, workbook_path= reference_wb_path,
+                            new_folder= 'put_by_strike', append_file_name='put_by_strike')
+
+    elif sort_by_expiration:
+        #save new_call_wb
+        save_new_workbook(new_workbook=new_call_wb, workbook_path= reference_wb_path,
+                            new_folder='call_by_expiration', append_file_name='call_by_expiration')
+        #save new_put_wb
+        save_new_workbook(new_workbook= new_put_wb, workbook_path= reference_wb_path,
+                            new_folder= 'put_by_expiration', append_file_name='put_by_expiration')
 
 
 def save_new_workbook(new_workbook,workbook_path,new_folder,append_file_name):
@@ -276,7 +284,14 @@ def save_new_workbook(new_workbook,workbook_path,new_folder,append_file_name):
         final_path = '{}/{}.{}'.format(new_path,new_file_name,split_file_name[-1])
         #save the workbook
         new_workbook.save(final_path)
-        print('Saving {}.{}'.format(new_file_name,split_file_name[-1]))    
+        # import pdb; pdb.set_trace()
+        data = 'Saving {}.{}\n'.format(new_file_name,split_file_name[-1])
+        if workbook_path.split('/')[-2] == 'target':
+            store_data_to_txt_file(file_name='sorted_target_sheet', data= data)
+
+        elif workbook_path.split('/')[-2] == 'acquirer':
+            store_data_to_txt_file(file_name='sorted_acquirer_sheet', data= data)
+
     else:
         #if the path doesn't exist, create it
         os.makedirs(new_path, exist_ok=False)
@@ -284,7 +299,12 @@ def save_new_workbook(new_workbook,workbook_path,new_folder,append_file_name):
         final_path = '{}/{}.{}'.format(new_path,new_file_name,split_file_name[-1])
         #save the workbook
         new_workbook.save(final_path)
-        print('Saving {}.{}'.format(new_file_name,split_file_name[-1]))
+        data ='Saving {}.{}\n'.format(new_file_name,split_file_name[-1])
+        if workbook_path.split('/')[-2] == 'target':
+            store_data_to_txt_file(file_name='sorted_target_sheet', data= data)
+
+        elif workbook_path.split('/')[-2] == 'acquirer':
+            store_data_to_txt_file(file_name='sorted_acquirer_sheet', data= data)
 
 
 def find_end_index_row(reference_sheet, index_column):
@@ -298,6 +318,61 @@ def find_end_index_row(reference_sheet, index_column):
 		sheet_max_row -=1
 
 	return sheet_max_row
+
+
+def sort_expiration_dates(exp_date_list):
+    '''
+    Give a list of expiration date strings formated in m-d-y, they are returned in order from earliest to latest
+    This method is based on an insertion sort method
+    '''
+    for i in range(1,len(exp_date_list)):
+        current_string = exp_date_list[i]
+        current_date = mdy_string_to_date(exp_date_list[i])
+        position = i
+
+        while (position> 0) and (mdy_string_to_date(exp_date_list[position-1]) > current_date):
+            exp_date_list[position] = exp_date_list[position-1]
+            position = position-1
+
+        exp_date_list[position] = current_string
+
+    return exp_date_list
+
+def mdy_string_to_date(mdy_str):
+    '''
+    Given a date string in the form m-d-y, the corresponding datetime object is returned
+    '''
+    return dt.datetime.strptime(mdy_str,'%m-%d-%y' ).date()
+
+
+def sort_strike_prices(strike_list):
+    '''
+    Given a list of string values in the form ['C#', 'C#', 'C#'...] or ['P#', 'P#', 'P#'...]
+    a sorted list is returned
+    '''
+    for i in range(1,len(strike_list)):
+        current_string = strike_list[i]
+        current_strike = string_to_strike(strike_list[i])
+        position = i
+
+        while position>0 and string_to_strike(strike_list[position-1]) > current_strike:
+            strike_list[position] = strike_list[position-1]
+            position = position-1
+
+        strike_list[position] = current_string
+    
+    return strike_list
+
+def string_to_strike(strike_string):
+    '''
+    Given a strike in the form 'C#' or 'P#', the number is returned as an integer or a float
+    '''
+    try:
+        strike = int(strike_string[1:])
+    except Exception as e:
+        strike = float(strike_string[1:])
+    
+    return strike
 
 
 
