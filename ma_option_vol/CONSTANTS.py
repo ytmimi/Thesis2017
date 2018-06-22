@@ -6,6 +6,7 @@ import os
 
 #Root path to all the files
 ROOT_PATH = os.path.abspath(os.pardir)
+# ROOT_PATH = '/Users/yacintmimi/Documents/UVM/Fall 2017/ma_option_vol/'
 
 #path to acquirer folder
 ACQUIRER_DIR = os.path.join(ROOT_PATH,'company_data', 'acquirer')
@@ -71,7 +72,7 @@ PUT_DESIGNATION_PATTERN = re.compile(r'[P]\d+')
 #sets the path to the treasury worksheet
 TREASURY_WORKBOOK_PATH = os.path.join(SAMPLE_DIR,'Week_Day Treasury Rates.xlsx')
 #loads the sheet title 'Rates' from the treasury workbook
-TREASURY_WORKSHEET= openpyxl.load_workbook(TREASURY_WORKBOOK_PATH, data_only=True).get_sheet_by_name('Rates')
+TREASURY_WORKSHEET= openpyxl.load_workbook(TREASURY_WORKBOOK_PATH, data_only=True)['Rates']
 #gets the total rows of the treasury sheet
 TOTAL_TREASURY_SHEET_ROWS = TREASURY_WORKSHEET.max_row
 TREASURY_DATA_START_ROW = 2
@@ -82,7 +83,7 @@ TWELVE_MONTH_COLUMN= 9
 
 #useful information for the vix data sheet
 VIX_INDEX_PATH = os.path.join(SAMPLE_DIR,'VIX INDEX.xlsx')
-VIX_SHEET = openpyxl.load_workbook(VIX_INDEX_PATH, data_only=True).get_sheet_by_name('VIX Data')
+VIX_SHEET = openpyxl.load_workbook(VIX_INDEX_PATH, data_only=True)['VIX Data']
 TOTAL_VIX_SHEET_ROWS = VIX_SHEET.max_row
 VIX_DATA_START_ROW = 2
 VIX_DATE_COLUMN = 4
