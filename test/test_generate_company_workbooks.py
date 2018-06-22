@@ -28,31 +28,35 @@ class Test_Generate_Company_WB(Test_Base):
 	def test_formated_wb_path_default(self):
 		# formated_wb_path(self, file_name, date_str='', file_extension='xlsx', path=''):
 		file_name = 'test_file'
-		final_file_name = self.wb_generator.formated_wb_path(file_name)
-		self.assertEqual(final_file_name, 'test_file_.xlsx')
+		date = dt.datetime.strptime('2018-06-20', '%Y-%m-%d')
+		final_file_name = self.wb_generator.formated_wb_path(file_name, date)
+		self.assertEqual(final_file_name, './test_file_2018-06-20.xlsx')
 
 	def test_formated_wb_path_kwargs(self):
 		# formated_wb_path(self, file_name, date_str, file_extension='xlsx', path=''):
 		file_name = 'test_file'
-		date_str = '2018-20-06'
+		date = dt.datetime.strptime('2018-06-20', '%Y-%m-%d')
 		path = '/Users/username/Documents/'
-		final_file_name = self.wb_generator.formated_wb_path(file_name, date_str, path=path)
-		self.assertEqual(final_file_name, '/Users/username/Documents/test_file_2018-20-06.xlsx')
+		final_file_name = self.wb_generator.formated_wb_path(file_name, date, path=path)
+		self.assertEqual(final_file_name, '/Users/username/Documents/test_file_2018-06-20.xlsx')
 
 	def test_save_new_workbook_target(self):
 		file_name = 'target_test'
-		date_str = '2018-20-06'
+		date = dt.datetime.strptime('2018-06-20', '%Y-%m-%d')
 		# def save_new_workbook(self,new_workbook,workbook_path, file_name, start_date_str, file_extension='xlsx'):
-		self.wb_generator.save_new_workbook(self.wb, self.target_path, file_name, date_str,)
+		self.wb_generator.save_new_workbook(self.wb, file_name, date, path=self.target_path)
 		self.assertIn('target', os.listdir(self.test_dir_path))
-		self.assertIn(f'{file_name}_{date_str}.xlsx', os.listdir(self.target_path))
+		date = date.strftime('%Y-%m-%d')
+		self.assertIn(f'{file_name}_{date}.xlsx', os.listdir(self.target_path))
 
+	
 	def test_save_workbook_acquirer(self):
 		file_name = 'acquirer_test'
-		date_str = '2018-20-06'
-		self.wb_generator.save_new_workbook(self.wb, self.acquirer_path, file_name, date_str,)
+		date = dt.datetime.strptime('2018-06-20', '%Y-%m-%d')
+		self.wb_generator.save_new_workbook(self.wb, file_name, date, path=self.acquirer_path)
 		self.assertIn('acquirer', os.listdir(self.test_dir_path))
-		self.assertIn(f'{file_name}_{date_str}.xlsx', os.listdir(self.acquirer_path))
+		date = date.strftime('%Y-%m-%d')
+		self.assertIn(f'{file_name}_{date}.xlsx', os.listdir(self.acquirer_path))
 
 	def test_adjust_to_weekday_saturday(self):
 		#check the calendar, this date is a Saturday
@@ -74,7 +78,7 @@ class Test_Generate_Company_WB(Test_Base):
 				target_name = row[3].value
 				announcement_date = self.wb_generator.adjust_to_weekday(row[1].value.date())
 				new_file = f'{target_name}_{announcement_date}.xlsx'
-				self.wb_generator.new_target_workbook(row, self.target_path)
+				self.wb_generator.new_company_workbook(i+1, self.target_path)
 				self.assertIn(new_file, os.listdir(self.target_path))
 		
 	def test_create_company_workbooks_acquirer(self):	
@@ -85,7 +89,7 @@ class Test_Generate_Company_WB(Test_Base):
 				acquirer_name = row[6].value
 				announcement_date = self.wb_generator.adjust_to_weekday(row[1].value.date())
 				new_file = f'{acquirer_name}_{announcement_date}.xlsx'
-				self.wb_generator.new_acquirer_workbook(row, self.acquirer_path)
+				self.wb_generator.new_company_workbook(i+1, self.acquirer_path)
 				self.assertIn(new_file, os.listdir(self.acquirer_path))
 
 	def test_company_workbook_data_target(self):
@@ -110,7 +114,7 @@ class Test_Generate_Company_WB(Test_Base):
 		]
 
 		#create the file from source wb 
-		self.wb_generator.new_target_workbook(row, self.target_path)
+		self.wb_generator.new_company_workbook(3, self.target_path)
 		#load the newly created wb
 		test_wb_file = os.listdir(self.target_path)[0]
 		path = os.path.join(self.target_path, test_wb_file)
@@ -119,7 +123,6 @@ class Test_Generate_Company_WB(Test_Base):
 		for row in range(9):
 			for col in range(2):
 				self.assertEqual(ws.cell(column=col+1, row=row+1).value,data[row][col])
-		
 
 	def test_company_workbook_data_acquirer(self):
 		#create the workbook
@@ -143,7 +146,7 @@ class Test_Generate_Company_WB(Test_Base):
 		]
 
 		#create the file from source wb 
-		self.wb_generator.new_acquirer_workbook(row, self.acquirer_path)
+		self.wb_generator.new_company_workbook(3, self.acquirer_path)
 		#load the newly created wb
 		test_wb_file = os.listdir(self.acquirer_path)[0]
 		path = os.path.join(self.acquirer_path, test_wb_file)
@@ -171,7 +174,7 @@ class Test_Generate_Company_WB(Test_Base):
 		self.wb_generator.get_company_options_tickers(sheet, st_date,
 			ann_date, row, col, interval, ticker_cell, type_cell)
 
-		for i in range(1, sheet.max_column +1, 2):
+		for i in range(1, sheet.max_column+1, 2):
 			self.assertIn( '=BDS(', sheet.cell(row=row, column=i).value)
 
 	def test_create_company_workbooks(self):

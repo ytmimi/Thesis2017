@@ -1,8 +1,9 @@
 import openpyxl
 import datetime as dt
 import os
-#imports the add_bloomberg_excel_functions from the current module
+
 import add_bloomberg_excel_functions as abxl
+from data_workbooks import Merger_Sample_Data 
 from update_excel_workbooks import store_data_to_txt_file
 from CONSTANTS import ACQUIRER_DIR, TARGET_DIR, MERGER_SAMPLE
 
@@ -12,161 +13,85 @@ class Create_Company_Workbooks():
         self.source_file = source_file
         self.target_path = target_path
         self.acquirer_path = acquirer_path
-
-    #Add a method that checks the first row of the source file to make sure that 
-    #all the columns we need are there. If not a string should be returned containing 
-    #all the missing columns
-
+        self.sample_manager = Merger_Sample_Data(source_file, source_sheet_name)
 
     def create_company_workbooks(self):
-        #saves the n
-        wb = openpyxl.load_workbook(self.source_file)
-        sheet = wb[self.source_sheet_name]
-        
-        #iterates over all the rows of the worksheet
-        for (i, row) in enumerate(sheet.rows):
-            #skips the first row of the worksheet because it contains column titles
-            if i < 1:
-                continue
-            else:
-                #creates the new workbooks
-                self.new_target_workbook(row_data=row, target_path= self.target_path)
-                self.new_acquirer_workbook(row_data=row, acquirer_path= self.acquirer_path)
+        #iterates over all the rows of the sample worksheet
+        for i in range(1, self.sample_manager.ws_length):
+            self.new_company_workbook(row_index=i+1, path=self.target_path)
+            self.new_company_workbook(row_index=i+1, path=self.acquirer_path)
 
-
-    def new_target_workbook(self,row_data, target_path):
-        '''
-        row_data is a tuple with the following indexes
-        0)Deal Type 1)Announce Date 2)Completion/Termination Date
-        3)Target Name 4)Target Ticker 5)EQY_OPT_AVAIL   
-        6)Acquirer Name 7)Acquirer Ticker 8)EQY_OPT_AVAIL 9)Announced Total Value (mil.)
-        10)Payment Type 11)TV/EBITDA 12)Deal Status 13)Stock Terms
-        '''
+    def format_source_data(self, row_index, include):
+        indexes = [self.sample_manager.headers.index(x)+1 for x in include]
+        #get the row data
+        data = self.sample_manager.row_values(row_index, include)
+        #set some data values
         one_year = dt.timedelta(days=360)
-        start_date = row_data[1].value - one_year
-        
-        #defines a date that acts as our cut off date
-        cut_off_date = dt.datetime(2012,2,15)
+        start_date = ((data[indexes[2]]['value'])-one_year).date()
+        announcement_date = self.adjust_to_weekday(data[indexes[2]]['value']).date()
+        end_date = data[indexes[-1]]['value'].date()
+        #list of data to use in the sheet
+        data = [[include[0], data[indexes[0]]['value']], 
+                [include[1], data[indexes[1]]['value']],
+                ['Type', 'Equity'],
+                ['Start Date', start_date],
+                ['Announcement Date', announcement_date],
+                ['End Date', end_date],
+                ['Formated Start Date',int(start_date.strftime('%Y%m%d'))],
+                ['Formated Announcement Date',int(announcement_date.strftime('%Y%m%d'))],
+                ['Formated End Date',int(end_date.strftime('%Y%m%d'))],]
+        return data
+
+    def new_company_workbook(self,row_index, path):
+        if path == self.target_path:
+            include = ['Target Name', 'Target Ticker', 'Announce Date', 'Completion/Termination Date']
+        elif path == self.acquirer_path:
+            include = ['Acquirer Name', 'Acquirer Ticker', 'Announce Date', 'Completion/Termination Date']
+        data = self.format_source_data(row_index, include)
+        cut_off_date = dt.date(2012,2,15)
         #if the start_date is greater than the cut off date, then create a new file
-        if start_date > cut_off_date:
+        if data[3][1] > cut_off_date:
+            new_wb = openpyxl.Workbook()
+            new_sheet = new_wb.active
+            new_sheet.title = 'Options Chain'
+            for item in data:
+                new_sheet.append(item)
+            self.get_company_options_tickers(new_sheet, data[3][1], data[4][1], 10, 1, 90, 'B2', 'B3')
+            # save_new_workbook(self, wb, file_name, start_date, path='.', extension='xlsx'):
+            self.save_new_workbook(new_wb, data[0][1], data[4][1], path=path,)
 
-            #checks that each announcement date is a weekday, if not, the date will be adjusted to the following Monday
-            announcement_date = self.adjust_to_weekday(row_data[1].value.date())
-
-            #a list of data that will be added to each newly created worksheet
-            data = [['Target Name', row_data[3].value], 
-                    ['Target Ticker', row_data[4].value],
-                    ['Type', 'Equity'],
-                    ['Start Date', start_date.date()],
-                    ['Announcement Date', announcement_date],
-                    ['End Date', row_data[2].value.date()],
-                    ['Formated Start Date',int(str(start_date.date()).replace('-',''))],
-                    ['Formated Announcement Date',int(str(announcement_date).replace('-',''))],
-                    ['Formated End Date',int(str(row_data[2].value.date()).replace('-',''))]]
-
-            #creates a new Workbook
-            wb_target = openpyxl.Workbook()
-            target_sheet = wb_target.active
-            target_sheet.title = 'Options Chain'
-            
-            #appends the data to the workbook        
-            for (index, cell) in enumerate(target_sheet['A1:B9']):
-                #tuple unpacking to set the cell values 
-                (cell[0].value, cell[1].value) = data[index]
-            self.get_company_options_tickers(reference_sheet=target_sheet, start_date=start_date.date(), announcement_date=announcement_date, 
-                                    row=10, start_column=1, interval=90, ticker_cell='B2', type_cell='B3')
-            
-            self.save_new_workbook( new_workbook= wb_target, workbook_path= target_path, 
-                                    file_name= row_data[3].value, start_date_str= str(row_data[1].value.date()),
-                                    file_extension= 'xlsx')        
-           
-
-    def new_acquirer_workbook(self,row_data, acquirer_path):
-        '''
-        row_data is a tuple with the following indexes
-        0)Deal Type 1)Announce Date 2)Completion/Termination Date
-        3)Target Name 4)Target Ticker 5)EQY_OPT_AVAIL   
-        6)Acquirer Name 7)Acquirer Ticker 8)EQY_OPT_AVAIL 9)Announced Total Value (mil.)
-        10)Payment Type 11)TV/EBITDA 12)Deal Status 13)Stock Terms
-        '''
-        one_year = dt.timedelta(days=360)
-        start_date = row_data[1].value - one_year
-        
-        #defines a date that acts as our cut off date
-        cut_off_date = dt.datetime(2012,2,15)
-
-        #if the start_date is greater than the cut off date, then create a new file
-        if start_date > cut_off_date:
-
-            #checks that each announcement date is a weekday, if not, the date will be adjusted to the following Monday
-            announcement_date = self.adjust_to_weekday(row_data[1].value.date())
-
-            #a list of data that will be added to each newly created worksheet
-            data = [['Acquirer Name', row_data[6].value], 
-                    ['Acquirer Ticker', row_data[7].value],
-                    ['Type', 'Equity'],
-                    ['Start Date', start_date.date()],
-                    ['Announcement Date', announcement_date],
-                    ['End Date', row_data[2].value.date()],
-                    ['Formated Start Date',int(str(start_date.date()).replace('-',''))],
-                    ['Formated Announcement Date',int(str(announcement_date).replace('-',''))],
-                    ['Formated End Date',int(str(row_data[2].value.date()).replace('-',''))]]
-            #creates a new Workbook
-            wb_acquirer = openpyxl.Workbook()
-            acquirer_sheet = wb_acquirer.active
-            acquirer_sheet.title = 'Options Chain'     
-            
-            #appends the data to the workbook        
-            for (index, cell) in enumerate(acquirer_sheet['A1:B9']):
-                #tuple unpacking to set the cell values 
-                (cell[0].value, cell[1].value) = data[index]
-            self.get_company_options_tickers(reference_sheet=acquirer_sheet, start_date=start_date.date(), announcement_date=announcement_date, 
-                                    row=10, start_column=1, interval=90, ticker_cell='B2', type_cell='B3')
-            
-            #saves the workbook
-            self.save_new_workbook( new_workbook= wb_acquirer, workbook_path= acquirer_path,
-                                    file_name= row_data[6].value, start_date_str=str(row_data[1].value.date()),
-                                    file_extension= 'xlsx')
-
-    #need to test
-    def get_company_options_tickers(self,reference_sheet, start_date, announcement_date, row, start_column, interval, ticker_cell, type_cell):
+    def get_company_options_tickers(self,reference_sheet, start_date, announcement_date, row, column, interval, ticker_cell, type_cell):
         #loop through and call the BDS function while to start_date+the interval is less than 1 months past the announcement date
         while start_date < (announcement_date + dt.timedelta(days=30)):
-            reference_sheet.cell(row=row,column=start_column).value = abxl.add_BDS_OPT_CHAIN(ticker_cell=ticker_cell,
-                                                                type_cell=type_cell, 
-                                                                date_override_cell=str(start_date).replace('-',''))
+            bds = abxl.add_BDS_OPT_CHAIN(ticker_cell, type_cell, start_date.strftime('%Y%m%d'))
+            reference_sheet.cell(row=row,column=column).value = bds
             start_date += dt.timedelta(days=interval)
-            start_column +=2
+            column +=2
 
-
-    def save_new_workbook(self,new_workbook,workbook_path, file_name, start_date_str, file_extension='xlsx'):
+    def save_new_workbook(self, wb, file_name, start_date, path='.', extension='xlsx'):
+        final_path = self.formated_wb_path(file_name, start_date, extension, path=path)
         #checks to see if the given workbook_path exists
-        if os.path.exists(workbook_path):
-            final_path = self.formated_wb_path(file_name, start_date_str, file_extension, path=workbook_path)
-            new_workbook.save(final_path)
+        if os.path.exists(path):
+            wb.save(final_path)
         else:
             #if the path doesn't exist, create it
-            os.makedirs(workbook_path, exist_ok=True)
-            print('Generating file path: {}'.format(workbook_path))
-            final_path = self.formated_wb_path(file_name, start_date_str, file_extension, path=workbook_path)
-            new_workbook.save(final_path)
-    
+            os.makedirs(path, exist_ok=True)
+            print(f'Generating file path: {path}')
+            wb.save(final_path)
 
-    def formated_wb_path(self, file_name, date_str='', file_extension='xlsx', path=''):
+    def formated_wb_path(self, file_name, date, file_extension='xlsx', path='.'):
         '''Returns the formated path used to save the file'''
-        #removes any / from the file_name
+        date = date.strftime('%Y-%m-%d')
         file_name = file_name.replace('/', '_')
-        file_with_extension = f'{file_name}_{date_str}.{file_extension}'
+        file_with_extension = f'{file_name}_{date}.{file_extension}'
         return os.path.join(path, file_with_extension)
-
-
 
     def adjust_to_weekday(self, date):
         '''
         A given datetime object is checked to see whether it is a weekend.  
         If it is, the date is adjusted to the next monday.
-        the dt.weekday() function returns a number from 0-6 corresponding to Monday-Sunday
         '''
+        #dt.weekday() returns a number from 0-6 corresponding to Monday-Sunday
         if date.weekday() == 5: 
             #adjusted to Monday
             date += dt.timedelta(days=2) 
