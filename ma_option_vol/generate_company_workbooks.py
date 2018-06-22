@@ -7,19 +7,21 @@ from update_excel_workbooks import store_data_to_txt_file
 from CONSTANTS import ACQUIRER_DIR, TARGET_DIR, MERGER_SAMPLE
 
 class Create_Company_Workbooks():
-    
-
     def __init__(self, source_sheet_name, source_file=MERGER_SAMPLE, target_path=TARGET_DIR, acquirer_path=ACQUIRER_DIR):
         self.source_sheet_name = source_sheet_name
         self.source_file = source_file
         self.target_path = target_path
         self.acquirer_path = acquirer_path
 
+    #Add a method that checks the first row of the source file to make sure that 
+    #all the columns we need are there. If not a string should be returned containing 
+    #all the missing columns
+
 
     def create_company_workbooks(self):
         #saves the n
         wb = openpyxl.load_workbook(self.source_file)
-        sheet = wb.get_sheet_by_name(self.source_sheet_name)
+        sheet = wb[self.source_sheet_name]
         
         #iterates over all the rows of the worksheet
         for (i, row) in enumerate(sheet.rows):
@@ -64,7 +66,7 @@ class Create_Company_Workbooks():
 
             #creates a new Workbook
             wb_target = openpyxl.Workbook()
-            target_sheet = wb_target.get_active_sheet()
+            target_sheet = wb_target.active
             target_sheet.title = 'Options Chain'
             
             #appends the data to the workbook        
@@ -111,7 +113,7 @@ class Create_Company_Workbooks():
                     ['Formated End Date',int(str(row_data[2].value.date()).replace('-',''))]]
             #creates a new Workbook
             wb_acquirer = openpyxl.Workbook()
-            acquirer_sheet = wb_acquirer.get_active_sheet()
+            acquirer_sheet = wb_acquirer.active
             acquirer_sheet.title = 'Options Chain'     
             
             #appends the data to the workbook        
@@ -126,7 +128,7 @@ class Create_Company_Workbooks():
                                     file_name= row_data[6].value, start_date_str=str(row_data[1].value.date()),
                                     file_extension= 'xlsx')
 
-
+    #need to test
     def get_company_options_tickers(self,reference_sheet, start_date, announcement_date, row, start_column, interval, ticker_cell, type_cell):
         #loop through and call the BDS function while to start_date+the interval is less than 1 months past the announcement date
         while start_date < (announcement_date + dt.timedelta(days=30)):
@@ -137,47 +139,40 @@ class Create_Company_Workbooks():
             start_column +=2
 
 
-    def save_new_workbook(self,new_workbook,workbook_path, file_name, start_date_str, file_extension):
+    def save_new_workbook(self,new_workbook,workbook_path, file_name, start_date_str, file_extension='xlsx'):
         #checks to see if the given workbook_path exists
         if os.path.exists(workbook_path):
-            #joins the path with the file Name 'file_name_start_date.file_extension', replacing / with _ to create valid excel file names
-            file_name_and_extension='{}_{}.{}'.format(file_name.replace('/','_'),start_date_str , file_extension)
-            final_path = '/'.join([workbook_path,file_name_and_extension])
-            #save the worksheet
+            final_path = self.formated_wb_path(file_name, start_date_str, file_extension, path=workbook_path)
             new_workbook.save(final_path)
-            if workbook_path == TARGET_DIR:
-                store_data_to_txt_file(file_name='target_workbooks', data='Created {}\n'.format(file_name_and_extension))
-            elif workbook_path == ACQUIRER_DIR: 
-                store_data_to_txt_file(file_name='acquirer_workbooks', data='Created {}\n'.format(file_name_and_extension))
         else:
             #if the path doesn't exist, create it
-            os.makedirs(workbook_path, exist_ok=False)
+            os.makedirs(workbook_path, exist_ok=True)
             print('Generating file path: {}'.format(workbook_path))
-            #joins the path with the file Name 'file_name_start_date.file_extension', replacing / with _ to create valid excel file names
-            file_name_and_extension='{}_{}.{}'.format(file_name.replace('/','_'),start_date_str , file_extension)
-            final_path = '/'.join([workbook_path,file_name_and_extension])
-            #save the worksheet
+            final_path = self.formated_wb_path(file_name, start_date_str, file_extension, path=workbook_path)
             new_workbook.save(final_path)
-            if workbook_path == TARGET_DIR:
-                store_data_to_txt_file(file_name='target_workbooks', data='Created {}\n'.format(file_name_and_extension))
-            elif workbook_path == ACQUIRER_DIR: 
-                store_data_to_txt_file(file_name='acquirer_workbooks', data='Created {}\n'.format(file_name_and_extension))
     
+
+    def formated_wb_path(self, file_name, date_str='', file_extension='xlsx', path=''):
+        '''Returns the formated path used to save the file'''
+        #removes any / from the file_name
+        file_name = file_name.replace('/', '_')
+        file_with_extension = f'{file_name}_{date_str}.{file_extension}'
+        return os.path.join(path, file_with_extension)
+
+
 
     def adjust_to_weekday(self, date):
         '''
-        A given datetime object is checked to see whether it is a weekend.  If it is, the date is adjusted to the next monday.
+        A given datetime object is checked to see whether it is a weekend.  
+        If it is, the date is adjusted to the next monday.
+        the dt.weekday() function returns a number from 0-6 corresponding to Monday-Sunday
         '''
-        #the dt.weekday() function returns a number from 0-6 corresponding to Monday-Sunday
-        #if its Saturday
         if date.weekday() == 5: 
             #adjusted to Monday
             date += dt.timedelta(days=2) 
-        #if its Sunday 
         elif date.weekday() == 6:
             #adjusted the date to Monday
             date += dt.timedelta(days=1) 
-        #return the adjusted date
         return date 
 
 
