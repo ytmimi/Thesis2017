@@ -8,6 +8,8 @@ import add_bloomberg_excel_functions as abxl
 from CONSTANTS import ( OPTION_DESCRIPTION_PATTERN_INT, OPTION_DESCRIPTION_PATTERN_FLOAT, OPTION_SHEET_PATTERN_INT, OPTION_SHEET_PATTERN_FLOAT,
                         STOCK_SHEET_PATTERN, OUTPUT_DIR)
 
+#meant to use with the 'Option Chain' sheet
+#########################Tested
 def update_sheet_with_BDP_description(workbook_path, sheet_name, starting_col, starting_row):
     '''
     Given an excel workbook, The BDP function is added with the appropriate cell reference and description  
@@ -16,7 +18,7 @@ def update_sheet_with_BDP_description(workbook_path, sheet_name, starting_col, s
     #opens the workbook
     wb = openpyxl.load_workbook(workbook_path)
     #gets the specified sheet from the workbook
-    sheet = wb.get_sheet_by_name(sheet_name)
+    sheet = wb[sheet_name]
     total_rows = sheet.max_row
     total_columns = sheet.max_column
     
@@ -43,7 +45,7 @@ def update_sheet_with_BDP_description(workbook_path, sheet_name, starting_col, s
     data = '{} contracts sampled for {}\n'.format(len(unique_ticker), wb_name)
     store_data_to_txt_file(file_name='option_des', data=data)
 
-
+#########################Tested
 def update_option_contract_sheets(workbook_path, sheet_name,starting_col,starting_row, sheet_start_date_cell, sheet_announce_date_cell, sheet_end_date_cell,  data_header_row, data_table_index, data_table_header, BDH_optional_arg=None, BDH_optional_val=None):
     '''
     Creates new sheets in the given excel workbook based on Option data stored in the given sheet_name.
@@ -68,7 +70,7 @@ def update_option_contract_sheets(workbook_path, sheet_name,starting_col,startin
     wb = openpyxl.load_workbook(workbook_path)
     
     #The sheet we want to get data from is set to the variable data_sheet
-    data_sheet = wb.get_sheet_by_name(sheet_name)
+    data_sheet = wb[sheet_name]
     
     #The cell in the sheet that contains the start date, as passed in by the function.
     if type(data_sheet[sheet_end_date_cell].value) == int:
@@ -152,12 +154,12 @@ def update_option_contract_sheets(workbook_path, sheet_name,starting_col,startin
     data='Saving workbook with {} new tabs: {} \n'.format(sheet_count,wb_name)
     store_data_to_txt_file(file_name='option_sheets', data=data)
  
-
+#########################Tested
 def format_option_description(security_name, option_description):
     '''
     security_name should be a string that looks similar to 'BBG00673J6L5 Equity'
     option_description should be a string that looks similar to 'PFE US 12/20/14 P18'
-    given the security_name and option_description a list of data will be output
+    return formatted option data
     '''
     #will split the option_description by whitespace into a list that looks like: ['PFE', 'US', '12/20/14', 'P18']
     description_list = option_description.split(' ')
@@ -234,12 +236,14 @@ def update_sheet_index(reference_sheet, date, start_row):
         reference_sheet.cell(row= index, column=1).value = index - index_0
 
 
+###################Will not test
 def update_read_data_only(file_path):
     '''
     Opens an Excel workbook in read_only mode, removing links to function calls, but maintaing the values stored in each cell.
     '''
-    wb= openpyxl.load_workbook(file_path, data_only= True)
+    wb = openpyxl.load_workbook(file_path, data_only= True)
     wb.save(file_path)
+    return wb
 
 
 def store_data_to_txt_file(file_name, data,file_path=OUTPUT_DIR):
@@ -261,21 +265,22 @@ def store_data_to_txt_file(file_name, data,file_path=OUTPUT_DIR):
         f = open(complete_path, 'w')
         f.write(data)
         f.close()
-
+        
+#########################Tested
 def delet_workbook_option_sheets(workbook_path):
     '''
     Given the file path to a workbook, all the option sheets are deleted
     '''
     wb = openpyxl.load_workbook(workbook_path)
-    start_sheet_num = len(wb.get_sheet_names())
+    start_sheet_num = len(wb.sheetnames)
     #set the active sheet in the workbook to the first sheet:
     wb.active = 0
-    for (index,sheet) in enumerate(wb.get_sheet_names()):
+    for (index,sheet) in enumerate(wb.sheetnames):
         #if the sheet is an option sheet
         if(re.match(OPTION_SHEET_PATTERN_INT, sheet)) or (re.match(OPTION_SHEET_PATTERN_FLOAT, sheet)):
-            wb.remove_sheet(wb.get_sheet_by_name(sheet))
+            del wb[sheet]
 
-    end_sheet_num = len(wb.get_sheet_names())
+    end_sheet_num = len(wb.sheetnames)
     deleted_sheet_num = start_sheet_num - end_sheet_num 
     wb_name = workbook_path.split('/')[-1]
     data ='Deleted {} sheets from {} \n'.format(deleted_sheet_num, wb_name)
@@ -284,6 +289,7 @@ def delet_workbook_option_sheets(workbook_path):
     wb.save(workbook_path)
 
 
+#########################Tested
 def find_index_0(worksheet,start, end, date_col, date_0):
     '''
     binary search function to determine which row index of the worksheet
@@ -322,7 +328,7 @@ def find_index_0(worksheet,start, end, date_col, date_0):
 
     return average_index
 
-
+#########################Tested
 def copy_data(reference_sheet, main_sheet,index_start_row, index_end_row, reference_data_column, main_data_column):
     '''
     Copies data from the reference_sheet to the main_sheet.  index_start_row is assumed to be the same for both the reference_sheet and main_sheet
@@ -391,6 +397,7 @@ def update_stock_price_sheet(workbook_path, sheet_name, stock_sheet_index, sheet
                                                                             end_date = reference_sheet[sheet_end_date_cell].value,
                                                                             optional_arg = BDH_optional_arg,
                                                                             optional_val = BDH_optional_val)
+
     #saves the newly added sheet to the workbook.
     wb.save(workbook_path)
     wb_name = workbook_path.split('/')[-1]
@@ -474,9 +481,9 @@ def find_column_index_by_header(reference_wb, column_header, header_row):
     data_columns_by_sheet= {}
 
     #iterate over all the sheetnames in the workbook
-    for (index,sheet_name) in enumerate(reference_wb.get_sheet_names()):
+    for (index,sheet_name) in enumerate(reference_wb.sheetnames):
         #load the given worksheet.
-        sheet = reference_wb.get_sheet_by_name(sheet_name)
+        sheet = reference_wb[sheet_name]
 
         #get the max_column for the worksheet:
         max_col =sheet.max_column
@@ -512,7 +519,7 @@ def stock_data_to_list(reference_wb,price_column_header, header_start_row, start
     for (index,key) in enumerate(data_column):
         if re.match(STOCK_SHEET_PATTERN, key):
             #load the worksheet
-            sheet=reference_wb.get_sheet_by_name(key)
+            sheet=reference_wb[key]
             for i in range(start_index, end_index+1):
                 if sheet.cell(row=i,column=data_column[key][0]).value !=0:
                     data_list.append(sheet.cell(row=i,column=data_column[key][0]).value)
@@ -540,7 +547,7 @@ def historic_stock_mean_and_std(reference_wb_path,price_column_header, header_st
     #loads the workbook and the specified sheet
     wb = openpyxl.load_workbook(reference_wb_path)
     #get the second sheet in the workbook
-    sheet = wb.get_sheet_by_name(wb.get_sheet_names()[1])
+    sheet = wb[wb.sheetnames[1]]
 
     total_rows=sheet.max_row
 
@@ -560,7 +567,7 @@ def merger_stock_mean_and_std(reference_wb_path, price_column_header, header_sta
     '''
     wb = openpyxl.load_workbook(reference_wb_path)
     #get the second sheet in the workbook
-    sheet = wb.get_sheet_by_name(wb.get_sheet_names()[1])
+    sheet = wb[wb.sheetnames[1]]
 
     total_rows=sheet.max_row
 
@@ -574,16 +581,15 @@ def merger_stock_mean_and_std(reference_wb_path, price_column_header, header_sta
     return(average, st_dev)
 
 
+#########################Tested
 def is_in_range(num, high, low):
     '''
     Given a number, and a high and low range, True is returned if the number is within the range 
     '''        
-    if low <=num <= high:
-        return True
-    else:
-        return False
+    return low <=num <= high
 
 
+#########################Tested
 def fill_option_wb_empty_cells(reference_wb_path, column_start, row_start, fill_value):
     '''
     Goes through each sheet and fills in the blanks with the designated fill_vale
@@ -592,10 +598,10 @@ def fill_option_wb_empty_cells(reference_wb_path, column_start, row_start, fill_
     wb = openpyxl.load_workbook(reference_wb_path)
 
     #iterate over each sheet
-    for (index,sheet_name) in enumerate(wb.get_sheet_names()):
+    for (index,sheet_name) in enumerate(wb.sheetnames):
         #if the sheet is an option sheet
         if re.match(OPTION_SHEET_PATTERN_INT, sheet_name) or re.match(OPTION_SHEET_PATTERN_FLOAT, sheet_name):
-            sheet = wb.get_sheet_by_name(sheet_name)
+            sheet = wb[sheet_name]
             fill_option_sheet_empty_cells(reference_sheet=sheet,column_start= column_start, row_start= row_start, fill_value= fill_value)
     
     #save the workbook:
@@ -603,6 +609,8 @@ def fill_option_wb_empty_cells(reference_wb_path, column_start, row_start, fill_
     print('Done filling empty cells with {}.'.format(fill_value))
 
 
+
+#########################Tested
 def fill_option_sheet_empty_cells(reference_sheet, column_start, row_start, fill_value):
     '''
     Goes through a sheet and fills in the empty cells with the designated fill_value
@@ -619,7 +627,7 @@ def fill_option_sheet_empty_cells(reference_sheet, column_start, row_start, fill
                 reference_sheet.cell(row=j, column=i).value = fill_value
 
 
-
+#########################Tested
 def convert_to_numbers(lst):
     '''
     Takes a list or a single character, and returns an integer, where A=1, B=2, C=3,...etc.
@@ -729,7 +737,7 @@ def update_sheet_days_till_expiration(reference_sheet, data_start_row, date_col,
             reference_sheet.cell(row=i, column=calculation_col).value = days_till_expiration(start_date=curr_date, 
                                                                                             expiration_date=exp_date)
 
-
+#########################Tested
 def days_till_expiration(start_date, expiration_date):
     '''
     Given an expiration date and a a starting date, the days to expiration is calculated
