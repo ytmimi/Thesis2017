@@ -1,7 +1,5 @@
 import numpy as np
 import datetime as dt
-from CONSTANTS import MINUTES_PER_MONTH as N30
-from CONSTANTS import MINUTES_PER_YEAR as N365
 from iv_calculation import days_till_expiration
 
 
@@ -23,6 +21,9 @@ class Option_Contract_Data():
 		else:
 			self.px_mid = round((self.px_ask + self.px_bid)/2,5)
 
+	def __str__(self):
+		return '{} Last: {} Bid: {}, Ask: {}'.format(self.option_description, self.px_last, self.px_bid, self.px_ask)
+
 	def set_px_mid(self, value):
 		'''
 		sets the mid price for the option
@@ -30,13 +31,23 @@ class Option_Contract_Data():
 		self.px_mid = value
 
 
+def current_time_format():
+		'''
+		Returns the current time as a string in the form 'HH:MM (AM or PM)'
+		'''
+		now = dt.datetime.now()
+		return (dt.datetime.strftime(now, '%I:%M %p'))
 
 
 class Near_Term():
 	'''
 	A class containing Options Contracts. orders strikes from smallest to largest
 	'''
-	def __init__(self, option_dict, risk_free_rate, current_date, current_time='4:00 PM', settlement_time='8:30 AM'):
+	#total number of minutes in a 365 day year
+	N365 = 525600
+
+	def __init__(self, option_dict, risk_free_rate, current_date=dt.datetime.today(), 
+				current_time=current_time_format(), settlement_time='8:30 AM'):
 		#assumes that the values for the keys of option_dic are list of Option_Contract_Data objects
 		self.current_date = current_date
 		self.option_dict = self.sort_dict_by_strike(option_dict)
@@ -130,7 +141,7 @@ class Near_Term():
 
 		m_other_day = self.convert_days_to_minutes(days_till_expiration(start_date=self.current_date, expiration_date=self.exp_date)-1) 
 
-		return (m_current_day + m_settlement_day + m_other_day)/ N365
+		return (m_current_day + m_settlement_day + m_other_day)/ self.N365
 
 
 	def smallest_mid_price_diff(self):
@@ -138,8 +149,10 @@ class Near_Term():
 		Returns the strike with the smallest absolute difference between the price of its respective call and put
 		'''
 		#creates a list of (strike price, mid price differences) tuples for each strike and midprice in both call and put lists
-		diff_list = [(round(np.abs(x.px_mid - y.px_mid),2), x.strike_price) for (x,y) in zip(self.option_dict['call'], self.option_dict['put'])]
-
+		same_strike_list = [(x.px_mid, y.px_mid, x.strike_price) for x in self.option_dict['call'] for y in self.option_dict['put'] if((x.strike_price == y.strike_price) and (x.px_mid !=y.px_mid !=0))]
+		#diff_list = [(round(np.abs(x.px_mid - y.px_mid),2), x.strike_price) for (x,y) in zip(self.option_dict['call'], self.option_dict['put'])]
+		diff_list = [(round(np.abs(item[0]-item[1]), 2),item[2]) for item in same_strike_list]
+		#import pdb;pdb.set_trace()
 		return min(diff_list)[1] #returns just the strike price from the tuple
 
 
@@ -229,7 +242,7 @@ class Near_Term():
 
 	def remove_zero_bid(self, option_list):
 		'''
-		Goes through an option list and addes non zero bid options to a new list.  
+		Goes through an option list and adds non zero bid options to a new list.  
 		If two consecutive zero bid options are found, no further options are considered
 		'''
 		final_list = []
@@ -240,7 +253,11 @@ class Near_Term():
 			if item.px_bid != 0:
 				final_list.append(item)
 			else:
-				if item.px_bid == option_list[index+1].px_bid ==0:
+				#if the last item in the list is 0
+				if item == option_list[-1] and item.px_bid == 0:
+					continue
+				#if an item in the list is zero and followed by a zero
+				elif item.px_bid == option_list[index+1].px_bid ==0:
 					break
 		
 		return final_list
@@ -323,11 +340,16 @@ class VIX_Calculation(object):
 	'''
 	Given a Near_Term and Next_Term object, the VIX volatility calculation is performed
 	'''
+	#total number of minutes in a 365 day year
+	N365 = 525600
+	#total number of minutes in a 30 day period
+	N30 = 43200
+
 	def __init__(self, Near_Term, Next_Term):
 		self.T1 = Near_Term.T
 		self.T2 = Next_Term.T
-		self.N_T1 = self.T1 * N365
-		self.N_T2 = self.T2 * N365
+		self.N_T1 = self.T1 * self.N365
+		self.N_T2 = self.T2 * self.N365
 		self.w1 = self.calculate_weight1()
 		self.w2 = self.calculate_weight2()
 		self.var1 = Near_Term.variance
@@ -336,18 +358,18 @@ class VIX_Calculation(object):
 
 
 	def calculate_weight1(self):
-		return self.T1*((self.N_T2 - N30)/(self.N_T2 - self.N_T1))
+		return self.T1*((self.N_T2 - self.N30)/(self.N_T2 - self.N_T1))
 
 
 	def calculate_weight2(self):
-		return self.T2*((N30 - self.N_T1)/(self.N_T2 - self.N_T1))
+		return self.T2*((self.N30 - self.N_T1)/(self.N_T2 - self.N_T1))
 
 
 	def Near_Next_30_day_weighted_average(self):
 		'''
 		calculates the 30 day weighted average between the Near and Next term variance's
 		'''
-		x = ((self.w1 * self.var1)+(self.w2 * self.var2))*(N365/N30)
+		x = ((self.w1 * self.var1)+(self.w2 * self.var2))*(self.N365/self.N30)
 		return np.sqrt(x)
 
 
@@ -360,7 +382,8 @@ class VIX_Calculation(object):
 
 
 
-def calculate_vix(near_term_dict, next_term_dict, R1, R2, current_date, current_time='4:00 PM', near_settlement_time='4:00 PM', next_settlement_time='4:00 PM'):
+def calculate_vix(near_term_dict, next_term_dict, R1, R2, current_date=dt.datetime.today(), 
+	current_time=current_time_format(), near_settlement_time='4:00 PM', next_settlement_time='4:00 PM'):
 	'''
 	Given the arguments for Near_Term and Next_Term objects, the VIX calculation is returned
 	'''
