@@ -18,7 +18,7 @@ class Test_Generate_Company_WB(Test_Base):
 		#Note: note that target_path and acquirer_path are defined in super()
 		self.wb = Workbook()
 		self.sheet_name = 'Filtered Sample Set'
-		self.source_file = 'test_sample.xlsx'
+		self.source_file = 'samples/test_sample.xlsx'
 		self.wb_generator = gcw.Create_Company_Workbooks(self.sheet_name, 
 					self.source_file, self.target_path, self.acquirer_path)
 		
