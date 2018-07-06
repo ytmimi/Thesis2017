@@ -233,76 +233,200 @@ class Test_Update_Excel_Workbooks(Test_Base):
 		cell = random_ws['B9'].value
 		self.assertIn('=BDH(', cell)
 
-	@unittest.skip('flush out test')
-	def test_update_data_index(self):
+
+	def test_update_sheet_index(self):
+		path = os.path.join(
+			os.path.dirname(os.path.abspath(__file__)),
+			'samples',
+			'test_stock_and_option_sheet.xlsx',
+			)
+		wb = load_workbook(path)
+		new_path = os.path.join(self.target_path, 'add_stock_index.xlsx')
+		wb.save(new_path)
+		#load the copy of the sample wb
+		wb = load_workbook(new_path)
+		ws = wb[wb.sheetnames[1]]
+		date = dt.datetime.strptime(str(ws['B4'].value), '%Y%m%d')
+		# update_sheet_index(reference_sheet, date, start_row)
+		start_row = 9
+		uxlw.update_sheet_index(ws, date, start_row)
+		# find_index_0(worksheet,start, end, date_col, date_0)
+		index_0 = uxlw.find_index_0(ws, start_row, ws.max_row, 2, date)
+		#check if the index was added correctly
+		for i in range(start_row, ws.max_row+1):
+			#index column is column 1
+			cell = ws.cell(row=i, column=1).value
+			self.assertEqual(cell, i-index_0)
+		
+
+
+	def test_update_workbook_index(self):
+		path = os.path.join(
+			os.path.dirname(os.path.abspath(__file__)),
+			'samples',
+			'test_stock_and_option_sheet.xlsx',
+			)
+		wb = load_workbook(path)
+		new_path = os.path.join(self.target_path, 'add_wb_index.xlsx')
+		wb.save(new_path)
+		#add new ws to the wb
+		data_table_index=['INDEX','DATE']
+		data_table_header=['PX_LAST','PX_BID','PX_ASK','PX_VOLUME','OPEN_INT', 'IVOL']
+		uxlw.update_option_contract_sheets(workbook_path=new_path, 
+											sheet_name='Options Chain',
+											starting_col=1,
+											starting_row=10,
+											sheet_start_date_cell='B7',
+											sheet_announce_date_cell='B8',
+											sheet_end_date_cell='B9',
+											data_header_row=8,
+											data_table_index=data_table_index,
+											data_table_header=data_table_header,
+											BDH_optional_arg=['Days', 'Fill'],
+											BDH_optional_val=['T','0'])
+		
 		#update the index for each sheet in relation to the announcement date
-		#uxlw.update_workbook_data_index(workbook_path =test_path, data_start_row=9, index_column='A')
-		pass
+		uxlw.update_workbook_data_index(workbook_path=new_path, data_start_row=9, index_column='A')
+		#load_workbook
+		wb = load_workbook(new_path)
+		ws = wb['Options Chain']
+		stock_sheet = wb[wb.sheetnames[1]]
+		#get the announcement date from the 'Options Chain'
+		announce_date = ws['B5'].value
+		index = uxlw.find_index_0(stock_sheet,9, stock_sheet.max_row, date_col=2, date_0=announce_date)
+		#pick a random ws from [1:]
+		random_sheet = wb[random.choice(wb.sheetnames[2:])]
+		#check if the index was added correctly
+		for i in range(9, random_sheet.max_row+1):
+			#index column is column 1
+			cell = random_sheet.cell(row=i, column=1).value
+			self.assertEqual(cell, i-index)
 
-	@unittest.skip('flush out test')
+
 	def test_find_column_index_by_header(self):
+		path = os.path.join(
+			os.path.dirname(os.path.abspath(__file__)),
+			'samples',
+			'test_stock_and_option_sheet.xlsx',
+			)
 		#test the find_column_index_by_header() function
-		# wb = openpyxl.load_workbook(test_path3)
-		# data_dict= uxlw.find_column_index_by_header(reference_wb =wb, column_header='PX_LAST', header_row=8)
-		# for index, key in enumerate(data_dict):
-		# 	print(key, data_dict[key])
-		pass
+		wb = load_workbook(path)
+		#test individual column
+		data_dict= uxlw.find_column_index_by_header(reference_wb=wb, column_header='PX_LAST', header_row=8)
+		for index, key in enumerate(data_dict):
+			self.assertEqual(data_dict[key], [3])
+		#test multiple columns
+		data_dict= uxlw.find_column_index_by_header(reference_wb=wb, column_header=['PX_LAST', 'DATE'], header_row=8)
+		for index, key in enumerate(data_dict):
+			self.assertEqual(data_dict[key], [3, 2])
+		
 
-	@unittest.skip('flush out test')
+	@unittest.skip('Not Testing')
 	def test_update_workbook_avg_col(self):
 		#test the update_workbook_average_column() function
 		#uxlw.update_workbook_average_column(reference_wb_path = test_path3, column_header='PX_LAST', header_row=8, data_start_row=9, ignore_sheet_list=['Stock Price'])
 		pass
 
-	@unittest.skip('flush out test')
+
 	def test_update_stock_price_sheet(self):
+		path = os.path.join(
+			os.path.dirname(os.path.abspath(__file__)),
+			'samples',
+			'test_stock_and_option_sheet.xlsx',
+			)
+		wb = load_workbook(path)
+		#delete the stock sheet thats already there
+		del wb[wb.sheetnames[1]]
+		self.assertEqual(len(wb.sheetnames), 1)
+		new_path = os.path.join(self.target_path, 'add_wb_index.xlsx')
+		#save to the updted path
+		wb.save(new_path)
 		#test the update_stock_price_sheet()
-		'''
-		uxlw.update_stock_price_sheet(	workbook_path =NextEra_test_path, #change back to test_path after testing NextEra sheet
+		data_table_index=['INDEX','DATE']
+		data_table_header=['PX_LAST'] 
+		uxlw.update_stock_price_sheet(workbook_path =new_path,
 									sheet_name='Options Chain',
 									stock_sheet_index = 1,
 									sheet_start_date_cell='B7',
-									sheet_end_date_cell='B8',  
+                                    sheet_announce_date_cell='B8', 
+                                    sheet_end_date_cell='B9',  
 									data_header_row=8, 
-									data_table_index=['INDEX','DATE'], 
-									data_table_header=['PX_LAST'], 
+									data_table_index=data_table_index, 
+									data_table_header=data_table_header, 
 									BDH_optional_arg=None, 
 									BDH_optional_val=None )
-		'''
-		pass
+		#load the wb after adding stock sheet
+		wb = load_workbook(new_path)
+		self.assertEqual(len(wb.sheetnames), 2)
+		#get the stock sheet
+		stock_sheet = wb[wb.sheetnames[1]]
+		meta = ['Company Name', 'Company Ticker', 'Start Date', 
+				'Announcement Date', 'End Date']
+		for i, item in enumerate(meta, start=1):
+			cell = stock_sheet.cell(row=i, column=1).value
+			self.assertEqual(cell, meta[i-1])
+		cell = stock_sheet['B9'].value
+		self.assertIn('=BDH(', cell)
+	
 
-	@unittest.skip('flush out test')
+	def test_data_average(self):
+		lst1 = [1,2,3,4,5]
+		result = uxlw.data_average(lst1)
+		self.assertEqual(result, 3)
+
+		lst2 = [1.2, 2.5, 6.7, 34.6, 22.58]
+		result = uxlw.data_average(lst2)
+		self.assertEqual(result, 13)
+
+
+	def test_data_standard_dev(self):
+		lst1 = [1,2,3,4,5]
+		result = uxlw.data_standard_dev(lst1)
+		self.assertEqual(result, 2)
+
+		lst2 = [1.2, 2.5, 6.7, 34.6, 22.58]
+		result = uxlw.data_standard_dev(lst2)
+		self.assertEqual(result, 15)
+
+
 	def stock_data_to_list(self):
-		#test
-		# stock_data = uxlw.stock_data_to_list(reference_wb_path=test_path2, price_column_header='PX_LAST', header_start_row=8)
-		# print(stock_data)
-		# average=uxlw.stock_price_average(reference_wb_path=test_path2, price_column_header='PX_LAST', header_start_row=8)
-		# print(average)
+		path = os.path.join(
+			os.path.dirname(os.path.abspath(__file__)),
+			'samples',
+			'test_stock_and_option_sheet.xlsx',
+			)
+		wb = load_workbook(path)
+		ws = wb[wb.sheetnames[1]]
 
-		# st_dev=uxlw.stock_price_standard_dev(reference_wb_path=test_stock_price, price_column_header='PX_LAST', header_start_row=8)
-		# print(st_dev)
+		stock_price_list = []
+		for i in range(9, ws.max_row+1):
+			cell = ws.cell(row=i, column=3).value
+			stock_price_list.append(cell)
 
-		# print(average+st_dev)
-		# print(average-st_dev)
-		pass
+		stock_data = uxlw.stock_data_to_list(reference_wb_path=path, price_column_header='PX_LAST', header_start_row=8)
+		self.assertEqual(stock_data, stock_price_list)
 
-	@unittest.skip('flush out test')
-	def test_mean_and_std(self):
-		#test mean and std functions:
-		# wb = openpyxl.load_workbook(Allegran_path)
-		# sheet = wb.get_sheet_by_name('Options Chain')
-		# announcement_date =dt.datetime.strptime(str(sheet['B8'].value),'%Y%m%d')
-		# print(announcement_date)
-		pass
 
-	@unittest.skip('flush out test')
 	def test_historic_stock_mean_and_std(self):
-		# hm_std=uxlw.historic_stock_mean_and_std(reference_wb_path=Allegran_path, price_column_header='PX_LAST', header_start_row=8, date_0=announcement_date)
-		# print(hm_std)
-		# print('\n')
-		# mm_std=uxlw.merger_stock_mean_and_std(reference_wb_path=Allegran_path, price_column_header='PX_LAST', header_start_row=8, date_0=announcement_date)
-		# print(mm_std)
-		pass
+		path = os.path.join(
+			os.path.dirname(os.path.abspath(__file__)),
+			'samples',
+			'test_stock_and_option_sheet.xlsx',
+			)
+		date = dt.datetime.strptime('20140708', '%Y%m%d')
+		hm_std=uxlw.historic_stock_mean_and_std(path, 'PX_LAST', header_start_row=8, date_0=date)
+		self.assertEqual(hm_std, (49, 4))
+		
+
+	def test_merger_stock_mean_and_std(self):
+		path = os.path.join(
+			os.path.dirname(os.path.abspath(__file__)),
+			'samples',
+			'test_stock_and_option_sheet.xlsx',
+			)
+		date = dt.datetime.strptime('20140708', '%Y%m%d')
+		mm_std=uxlw.merger_stock_mean_and_std(path, 'PX_LAST', header_start_row=8, date_0=date)
+		self.assertEqual(mm_std, (55, 3))
 
 
 	def test_convert_to_numbers_single(self):
@@ -320,7 +444,8 @@ class Test_Update_Excel_Workbooks(Test_Base):
 		expected = [1, 2, 4, 7, 8, 5, 27]
 		self.assertEqual(value, expected)
 
-	@unittest.skip('flush out test')
+	
+	@unittest.skip('Not Testing')
 	def test_add_extra_sheets(self):
 		# uxlw.add_extra_sheets(reference_wb_path=Pfizer_test_path, sheet_name='Options Chain', ticker_column=1, 
 		# 	description_column=2,sheet_start_date_cell='B7', sheet_announce_date_cell='B8', 

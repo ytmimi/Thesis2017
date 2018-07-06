@@ -184,7 +184,7 @@ def format_option_description(security_name, option_description):
 
     return option_data_list
 
-
+#########################Tested
 def update_workbook_data_index(workbook_path, data_start_row, index_column):
     '''
     Given a workbook, loop through all the sheets of that workbook and update the index for each sheet.
@@ -192,7 +192,7 @@ def update_workbook_data_index(workbook_path, data_start_row, index_column):
     #loads an excel workbook given the file path to that workbook.
     wb = openpyxl.load_workbook(workbook_path)
     #gets a list of all the sheets in the workbook
-    sheet_list = wb.get_sheet_names()
+    sheet_list = wb.sheetnames
 
     #in case index column was passed in as a character, convert it to an integer
     index_column= convert_to_numbers(index_column)
@@ -202,25 +202,25 @@ def update_workbook_data_index(workbook_path, data_start_row, index_column):
         #indexing starts at 0.
         if index == 0:
             #get the announcement date from the first sheet
-            sheet = wb.get_sheet_by_name(sheet_name)
+            sheet = wb[sheet_name]
             announcement_date = sheet['B5'].value
         #if the sheet_name matches the stock sheet pattern:
         if re.match(STOCK_SHEET_PATTERN, sheet_name):
             #load the stock sheet and save it to the stock_sheet variable
-            stock_sheet = wb.get_sheet_by_name(sheet_name)
+            stock_sheet = wb[sheet_name]
             total_rows = stock_sheet.max_row
-            update_sheet_index(reference_sheet= stock_sheet, date=announcement_date, start_row= data_start_row)
+            update_sheet_index(reference_sheet= stock_sheet, date=announcement_date, start_row=data_start_row)
 
         #elif the sheet_name matches an options contract sheet 
         elif(re.match(OPTION_SHEET_PATTERN_INT, sheet_name) or re.match(OPTION_SHEET_PATTERN_FLOAT, sheet_name)):
             #load the option sheet and save it to the option_sheet variable
-            option_sheet = wb.get_sheet_by_name(sheet_name)
+            option_sheet = wb[sheet_name]
             copy_data(reference_sheet=stock_sheet, main_sheet=option_sheet, index_start_row=data_start_row, 
                       index_end_row=total_rows, reference_data_column=index_column, main_data_column=index_column)
     wb.save(workbook_path)
     print('Indexed each sheet. Saving workbook...')
 
-
+#########################Tested
 def update_sheet_index(reference_sheet, date, start_row):
     '''
     Given an excel worksheet,a designated date, and a starting row,
@@ -357,7 +357,7 @@ def copy_data(reference_sheet, main_sheet,index_start_row, index_end_row, refere
             main_sheet.cell(row=i, column=main_data_column).value = reference_sheet.cell(row=i, column=reference_data_column).value
 
 
-
+#########################Tested
 def update_stock_price_sheet(workbook_path, sheet_name, stock_sheet_index, sheet_start_date_cell,sheet_announce_date_cell, sheet_end_date_cell,  data_header_row, data_table_index, data_table_header, BDH_optional_arg=None, BDH_optional_val=None ):
     '''
     Adds a sheet with stock price information to the workbook
@@ -366,7 +366,7 @@ def update_stock_price_sheet(workbook_path, sheet_name, stock_sheet_index, sheet
     wb = openpyxl.load_workbook(workbook_path)
 
     #gets the reference sheet
-    reference_sheet = wb.get_sheet_by_name(sheet_name)
+    reference_sheet = wb[sheet_name]
     ticker = '{} {}'.format(reference_sheet['B2'].value, reference_sheet['B3'].value)
 
     #create a new sheet, and makes it the second sheet in the workbook. sheet indexing starts at 0.
@@ -406,73 +406,73 @@ def update_stock_price_sheet(workbook_path, sheet_name, stock_sheet_index, sheet
 
 
 
-def update_workbook_average_column(reference_wb_path, column_header, header_row, data_start_row, ignore_sheet_list=[]):
-    '''
-    Given the path to an excel workbook, Averages are calculated for each sheet of data
-    '''
-    #loads an excel workbook from the given file_path
-    reference_wb = openpyxl.load_workbook(reference_wb_path, data_only=True)
-    #returns a dictionary of 'sheet_names':[column data indexes] for each sheet of the given workbook
-    sheet_data_columns =find_column_index_by_header(reference_wb= reference_wb, column_header= column_header, header_row= header_row)
+# def update_workbook_average_column(reference_wb_path, column_header, header_row, data_start_row, ignore_sheet_list=[]):
+#     '''
+#     Given the path to an excel workbook, Averages are calculated for each sheet of data
+#     '''
+#     #loads an excel workbook from the given file_path
+#     reference_wb = openpyxl.load_workbook(reference_wb_path, data_only=True)
+#     #returns a dictionary of 'sheet_names':[column data indexes] for each sheet of the given workbook
+#     sheet_data_columns =find_column_index_by_header(reference_wb= reference_wb, column_header= column_header, header_row= header_row)
 
-    #removes any sheets that are ment to be ignored if provided
-    if ignore_sheet_list != []:
-        #iterates over every sheet name passed into ignore_sheet_list
-        for index, ignore_sheet in enumerate(ignore_sheet_list):
-            #removes the sheet name from the dictionary sheet_data_columns, so that it wont be iterated over next
-            sheet_data_columns.pop(ignore_sheet)
+#     #removes any sheets that are ment to be ignored if provided
+#     if ignore_sheet_list != []:
+#         #iterates over every sheet name passed into ignore_sheet_list
+#         for index, ignore_sheet in enumerate(ignore_sheet_list):
+#             #removes the sheet name from the dictionary sheet_data_columns, so that it wont be iterated over next
+#             sheet_data_columns.pop(ignore_sheet)
 
-    #iterate over each key(sheet_name) in sheet_data_columns:
-    for (index,key) in enumerate(sheet_data_columns):
-        #update the given sheet with the average column
-        update_sheet_average_column(reference_wb= reference_wb, 
-                                    sheet_name= key,
-                                    data_columns= sheet_data_columns[key],
-                                    data_start_row= data_start_row,
-                                    column_header= column_header)
+#     #iterate over each key(sheet_name) in sheet_data_columns:
+#     for (index,key) in enumerate(sheet_data_columns):
+#         #update the given sheet with the average column
+#         update_sheet_average_column(reference_wb= reference_wb, 
+#                                     sheet_name= key,
+#                                     data_columns= sheet_data_columns[key],
+#                                     data_start_row= data_start_row,
+#                                     column_header= column_header)
 
-    #saves the excel workbook
-    reference_wb.save(reference_wb_path)
-    print('Saving Workbook...')
+#     #saves the excel workbook
+#     reference_wb.save(reference_wb_path)
+#     print('Saving Workbook...')
 
 
-def update_sheet_average_column(reference_wb,sheet_name,data_columns, data_start_row, column_header):
-    '''
-    Given an excel worksheet, and a specified list of columns, averages are calcualted for each row of the data
-    '''
-    #loads the sheet of the reference_wb
-    sheet = reference_wb.get_sheet_by_name(sheet_name)
+# def update_sheet_average_column(reference_wb,sheet_name,data_columns, data_start_row, column_header):
+#     '''
+#     Given an excel worksheet, and a specified list of columns, averages are calcualted for each row of the data
+#     '''
+#     #loads the sheet of the reference_wb
+#     sheet = reference_wb.get_sheet_by_name(sheet_name)
 
-    #gets the max row of the sheet 
-    max_row = sheet.max_row
+#     #gets the max row of the sheet 
+#     max_row = sheet.max_row
 
-    #gets the max column of the sheet
-    max_col = sheet.max_column
+#     #gets the max column of the sheet
+#     max_col = sheet.max_column
     
-    #sets the header for the average column to the average_col_header and places it one row above the data
-    sheet.cell(row=data_start_row-1, column=max_col+1).value = '{} {} {}'.format(sheet_name, 'Average', column_header)
+#     #sets the header for the average column to the average_col_header and places it one row above the data
+#     sheet.cell(row=data_start_row-1, column=max_col+1).value = '{} {} {}'.format(sheet_name, 'Average', column_header)
 
-    #iterate over each row of the workbook:
-    for i in range(data_start_row,max_row+1):
-        #an empty lest to store the values for the cells of the given row
-        cell_values = []
-        #iterate over each cell in the data column
-        for (index, column_ref) in enumerate(data_columns):
-            #if the value of the cell isn't 0, append it to the cell_values list
-            if sheet.cell(row=i, column=column_ref).value != 0:
-                cell_values.append(sheet.cell(row=i, column=column_ref).value)
+#     #iterate over each row of the workbook:
+#     for i in range(data_start_row,max_row+1):
+#         #an empty lest to store the values for the cells of the given row
+#         cell_values = []
+#         #iterate over each cell in the data column
+#         for (index, column_ref) in enumerate(data_columns):
+#             #if the value of the cell isn't 0, append it to the cell_values list
+#             if sheet.cell(row=i, column=column_ref).value != 0:
+#                 cell_values.append(sheet.cell(row=i, column=column_ref).value)
 
-        #assing the value of the average column
-        #if the cell_values list is an empyt list
-        if cell_values == []:
-            #set the value of the cell to 0
-            sheet.cell(row=i, column=max_col+1).value = 0
-        #else cell_values is populated
-        else:
-            #set the value of the average column to the mean of the cell_values
-            sheet.cell(row=i, column=max_col+1).value = statistics.mean(cell_values)
+#         #assing the value of the average column
+#         #if the cell_values list is an empyt list
+#         if cell_values == []:
+#             #set the value of the cell to 0
+#             sheet.cell(row=i, column=max_col+1).value = 0
+#         #else cell_values is populated
+#         else:
+#             #set the value of the average column to the mean of the cell_values
+#             sheet.cell(row=i, column=max_col+1).value = statistics.mean(cell_values)
 
-
+#########################Tested
 def find_column_index_by_header(reference_wb, column_header, header_row):
     '''
     Returns a dictionary where the key is the sheet name, and the value is the column where the specified header was located
@@ -504,7 +504,7 @@ def find_column_index_by_header(reference_wb, column_header, header_row):
     #return the dictionary with the data for each sheet
     return data_columns_by_sheet
 
-
+#########################Tested
 def stock_data_to_list(reference_wb,price_column_header, header_start_row, start_index, end_index):
     '''
     Given the file path to a workbook, data in a particular cell is added to a list and then the list is returned
@@ -526,6 +526,7 @@ def stock_data_to_list(reference_wb,price_column_header, header_start_row, start
     #return the data_list
     return data_list
 
+#########################Tested
 def data_average(data_list):
     '''
     returns the average of a given list, rounded down to the nearest whole number
@@ -533,13 +534,14 @@ def data_average(data_list):
     return floor(mean(data_list))
 
 
+#########################Tested
 def data_standard_dev(data_list):
     '''
     returns the standard deviation of a given list, rounded up to the nearest whole number
     '''
     return ceil(stdev(data=data_list))
 
-
+#########################Tested
 def historic_stock_mean_and_std(reference_wb_path,price_column_header, header_start_row, date_0):
     '''
     calculates the mean and standard deviation for prices up to the announcemnt date
@@ -560,7 +562,7 @@ def historic_stock_mean_and_std(reference_wb_path,price_column_header, header_st
 
     return(average, st_dev)
 
-
+#########################Tested
 def merger_stock_mean_and_std(reference_wb_path, price_column_header, header_start_row, date_0):
     '''
     calculates the mean and standard deviation for prices from the merger date to the end of the M&A
@@ -697,45 +699,45 @@ def add_extra_sheets(reference_wb_path, sheet_name, ticker_column, description_c
     print('Added {} new sheets to the workbook'.format(sheet_count))
 
 
-def update_workbook_days_till_expiration(reference_wb_path, data_start_row, date_col, calculation_col):
-    '''
-    Updates each option sheet in the workbook to contain the days till expiration for that sheets option
-    '''
-    #loads the workbook
-    wb = openpyxl.load_workbook(reference_wb_path)
-    #converts date_col and calculation_col if passed as letters
-    date_col=convert_to_numbers(date_col)
-    calculation_col = convert_to_numbers(calculation_col)
-    #loop through all the sheets in the workbook
-    for (index, sheet_name) in enumerate(wb.get_sheet_names()):
-        #if the sheet_name matches an option sheet:
-        if re.match(OPTION_SHEET_PATTERN_INT, sheet_name) or re.match(OPTION_SHEET_PATTERN_FLOAT, sheet_name):
-            #get the sheet
-            sheet = wb.get_sheet_by_name(sheet_name)
-            update_sheet_days_till_expiration(reference_sheet= sheet, data_start_row= data_start_row, 
-                                                date_col= date_col, calculation_col= calculation_col)
-    #save changes
-    wb.save(reference_wb_path)
+# def update_workbook_days_till_expiration(reference_wb_path, data_start_row, date_col, calculation_col):
+#     '''
+#     Updates each option sheet in the workbook to contain the days till expiration for that sheets option
+#     '''
+#     #loads the workbook
+#     wb = openpyxl.load_workbook(reference_wb_path)
+#     #converts date_col and calculation_col if passed as letters
+#     date_col=convert_to_numbers(date_col)
+#     calculation_col = convert_to_numbers(calculation_col)
+#     #loop through all the sheets in the workbook
+#     for (index, sheet_name) in enumerate(wb.get_sheet_names()):
+#         #if the sheet_name matches an option sheet:
+#         if re.match(OPTION_SHEET_PATTERN_INT, sheet_name) or re.match(OPTION_SHEET_PATTERN_FLOAT, sheet_name):
+#             #get the sheet
+#             sheet = wb.get_sheet_by_name(sheet_name)
+#             update_sheet_days_till_expiration(reference_sheet= sheet, data_start_row= data_start_row, 
+#                                                 date_col= date_col, calculation_col= calculation_col)
+#     #save changes
+#     wb.save(reference_wb_path)
  
 
-def update_sheet_days_till_expiration(reference_sheet, data_start_row, date_col, calculation_col):
-    '''
-    loops over each row containing option data and returns the days till expiration in the designated column
-    '''
-    #sets the total rows of the worksheet
-    total_rows = reference_sheet.max_row
-    #sets the expiratioin date
-    exp_date = reference_sheet['B4'].value
-    #sets the header of the column
-    reference_sheet.cell(row=data_start_row-1, column=calculation_col).value = 'DTE'
-    #loops through each row from data_start_row till total_rows
-    for i in range(data_start_row, total_rows+1):
-        if reference_sheet.cell(row=i, column=date_col).value == None:
-            break
-        else:
-            curr_date = reference_sheet.cell(row=i, column=date_col).value
-            reference_sheet.cell(row=i, column=calculation_col).value = days_till_expiration(start_date=curr_date, 
-                                                                                            expiration_date=exp_date)
+# def update_sheet_days_till_expiration(reference_sheet, data_start_row, date_col, calculation_col):
+#     '''
+#     loops over each row containing option data and returns the days till expiration in the designated column
+#     '''
+#     #sets the total rows of the worksheet
+#     total_rows = reference_sheet.max_row
+#     #sets the expiratioin date
+#     exp_date = reference_sheet['B4'].value
+#     #sets the header of the column
+#     reference_sheet.cell(row=data_start_row-1, column=calculation_col).value = 'DTE'
+#     #loops through each row from data_start_row till total_rows
+#     for i in range(data_start_row, total_rows+1):
+#         if reference_sheet.cell(row=i, column=date_col).value == None:
+#             break
+#         else:
+#             curr_date = reference_sheet.cell(row=i, column=date_col).value
+#             reference_sheet.cell(row=i, column=calculation_col).value = days_till_expiration(start_date=curr_date, 
+#                                                                                            expiration_date=exp_date)
 
 #########################Tested
 def days_till_expiration(start_date, expiration_date):
