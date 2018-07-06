@@ -15,9 +15,10 @@ from base_test import Test_Base
 
 class Test_Data_WorkSheet(Test_Base):
 	def setUp(self):
-		self.path = 'test_sample.xlsx'
+		self.path = 'samples/test_sample.xlsx'
 		self.sheet_name = 'Filtered Sample Set'
-		self.data_ws = Data_WorkSheet(self.path, self.sheet_name)
+		self.wb = load_workbook(self.path)
+		self.data_ws = Data_WorkSheet(self.wb, self.sheet_name)
 
 	def tearDown(slef):
 		super().tearDown()
@@ -75,9 +76,10 @@ class Test_Data_WorkSheet(Test_Base):
 
 class Test_Merger_Sample_Data(Test_Base):
 	def setUp(self):
-		self.path = 'test_sample.xlsx'
+		self.path = 'samples/test_sample.xlsx'
 		self.sheet_name = 'Filtered Sample Set'
-		self.data_ws = Merger_Sample_Data(self.path, self.sheet_name)
+		self.wb = load_workbook(self.path)
+		self.data_ws = Merger_Sample_Data(self.wb, self.sheet_name)
 
 	def tearDown(self):
 		super().tearDown()
