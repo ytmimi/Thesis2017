@@ -246,7 +246,7 @@ class Test_Update_Excel_Workbooks(Test_Base):
 		#load the copy of the sample wb
 		wb = load_workbook(new_path)
 		ws = wb[wb.sheetnames[1]]
-		date = dt.datetime.strptime(str(ws['B4'].value), '%Y%m%d')
+		date = ws['B4'].value
 		# update_sheet_index(reference_sheet, date, start_row)
 		start_row = 9
 		uxlw.update_sheet_index(ws, date, start_row)
