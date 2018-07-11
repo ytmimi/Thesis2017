@@ -13,7 +13,8 @@ class Create_Company_Workbooks():
         self.source_file = source_file
         self.target_path = target_path
         self.acquirer_path = acquirer_path
-        self.sample_manager = Merger_Sample_Data(source_file, source_sheet_name)
+        self.wb = openpyxl.load_workbook(source_file)
+        self.sample_manager = Merger_Sample_Data(self.wb, source_sheet_name)
 
     def create_company_workbooks(self):
         #iterates over all the rows of the sample worksheet
