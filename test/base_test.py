@@ -4,39 +4,32 @@ from shutil import rmtree
 
 BASE_DIR = os.path.abspath(os.pardir)
 
-class Test_Base(unittest.TestCase):
-	@classmethod
-	def setUpClass(cls):
-		'''
-		Creates a temporary folder to store the files created by the tests
-		'''
-		cls.test_dir_path = os.path.join(BASE_DIR, 'test_files')
-		os.makedirs(cls.test_dir_path, exist_ok=True)
-		print(f'\nCreating Temporary Directory \n{cls.test_dir_path}\n')
-		cls.target_path = os.path.join(cls.test_dir_path, 'target')
-		os.makedirs(cls.target_path, exist_ok=True)
-		cls.acquirer_path = os.path.join(cls.test_dir_path, 'acquirer')
-		os.makedirs(cls.acquirer_path, exist_ok=True)
-			
-	@classmethod
-	def tearDownClass(cls):
-		''' 
-		Removes the temporary folder and the files that were created in 
-		SetUpClass
-		'''
-		rmtree(cls.test_dir_path)
-		print(f'\nDeleting Temporary Directory \n{cls.test_dir_path}\n')
+TEST_DIR_PATH = os.path.join(BASE_DIR, 'test_files')
+TEST_TARGET_PATH = os.path.join(TEST_DIR_PATH, 'target')
+TEST_ACQUIRER_PATH = os.path.join(TEST_DIR_PATH, 'acquirer')
 
-	def tearDown(self):
-		''' clears test folders after each test '''
-		if len(os.listdir(self.target_path)) > 0:
-			for file in os.listdir(self.target_path):
-				self.remove_file(self.target_path, file)
+def setUpModule():
+	'''Creates a temporary directory for tests'''
+	os.makedirs(TEST_DIR_PATH, exist_ok=True)
+	os.makedirs(TEST_TARGET_PATH, exist_ok=True)
+	os.makedirs(TEST_ACQUIRER_PATH, exist_ok=True)
+	print('\nCreating temporary directory:\n'+f'{TEST_DIR_PATH}\n')
 
-		if len(os.listdir(self.acquirer_path)) > 0:
-			for file in os.listdir(self.acquirer_path):
-				self.remove_file(self.acquirer_path, file)
+def tearDownModule():
+	''' Removes temporary directories'''
+	rmtree(TEST_DIR_PATH)
+	print('\n\nRemoving temporary directory:\n'+f'{TEST_DIR_PATH}')
 
-	def remove_file(self, path, file_name):
+def clean_up():
+	'''clears test folders'''
+	if len(os.listdir(TEST_TARGET_PATH)) > 0:
+		for file in os.listdir(TEST_TARGET_PATH):
+			remove_file(TEST_TARGET_PATH, file)
+
+	if len(os.listdir(TEST_ACQUIRER_PATH)) > 0:
+		for file in os.listdir(TEST_ACQUIRER_PATH):
+			remove_file(TEST_ACQUIRER_PATH, file)
+
+def remove_file(path, file_name):
 		path = os.path.join(path,file_name)
 		os.remove(path)
