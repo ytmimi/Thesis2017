@@ -3,27 +3,36 @@ import sys
 import unittest
 import datetime as dt
 from openpyxl import Workbook, load_workbook
+
 BASE_DIR = os.path.abspath(os.pardir)
 path = os.path.join(BASE_DIR,'ma_option_vol')
 sys.path.append(path)
+
 import generate_company_workbooks as gcw
-from base_test import Test_Base
 
-# c = gcw.Create_Company_Workbooks(source_sheet_name, source_file, target_path, acquirer_path)
-# c.create_company_workbooks()
+import base_test
+def setUpModule():
+	base_test.setUpModule()
+
+def tearDownModule():
+	base_test.tearDownModule()
 
 
-class Test_Generate_Company_WB(Test_Base):
+
+class Test_Generate_Company_WB(unittest.TestCase):
 	def setUp(self):
-		#Note: note that target_path and acquirer_path are defined in super()
+		self.test_dir_path = base_test.TEST_DIR_PATH
+		self.acquirer_path = base_test.TEST_ACQUIRER_PATH
+		self.target_path = base_test.TEST_TARGET_PATH
+		
 		self.wb = Workbook()
 		self.sheet_name = 'Filtered Sample Set'
 		self.source_file = 'samples/test_sample.xlsx'
 		self.wb_generator = gcw.Create_Company_Workbooks(self.sheet_name, 
 					self.source_file, self.target_path, self.acquirer_path)
 		
-	def tearDown(self):
-		super().tearDown()
+	def tearDown(slef):
+		base_test.clean_up()
 
 	def test_formated_wb_path_default(self):
 		# formated_wb_path(self, file_name, date_str='', file_extension='xlsx', path=''):
