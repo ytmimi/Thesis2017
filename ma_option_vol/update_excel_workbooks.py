@@ -8,6 +8,7 @@ import add_bloomberg_excel_functions as abxl
 from CONSTANTS import ( OPTION_DESCRIPTION_PATTERN_INT, OPTION_DESCRIPTION_PATTERN_FLOAT, OPTION_SHEET_PATTERN_INT, OPTION_SHEET_PATTERN_FLOAT,
                         STOCK_SHEET_PATTERN, OUTPUT_DIR)
 
+#added to the Option_Chain_Sheet class
 #meant to use with the 'Option Chain' sheet
 #########################Tested
 def update_sheet_with_BDP_description(workbook_path, sheet_name, starting_col, starting_row):
@@ -41,10 +42,12 @@ def update_sheet_with_BDP_description(workbook_path, sheet_name, starting_col, s
     
     # #saves the workbook
     wb.save(workbook_path)
-    wb_name = workbook_path.split('/')[-1]
-    data = '{} contracts sampled for {}\n'.format(len(unique_ticker), wb_name)
-    store_data_to_txt_file(file_name='option_des', data=data)
+    # wb_name = workbook_path.split('/')[-1]
+    # data = '{} contracts sampled for {}\n'.format(len(unique_ticker), wb_name)
+    # store_data_to_txt_file(file_name='option_des', data=data)
 
+
+### Added to Option_Workbook as create_option_sheet and add_option_sheets
 #########################Tested
 def update_option_contract_sheets(workbook_path, sheet_name,starting_col,starting_row, sheet_start_date_cell, sheet_announce_date_cell, sheet_end_date_cell,  data_header_row, data_table_index, data_table_header, BDH_optional_arg=None, BDH_optional_val=None):
     '''
@@ -154,6 +157,7 @@ def update_option_contract_sheets(workbook_path, sheet_name,starting_col,startin
     data='Saving workbook with {} new tabs: {} \n'.format(sheet_count,wb_name)
     store_data_to_txt_file(file_name='option_sheets', data=data)
  
+###added to Option_Chain_Sheet as parse_option_description
 #########################Tested
 def format_option_description(security_name, option_description):
     '''
@@ -184,6 +188,8 @@ def format_option_description(security_name, option_description):
 
     return option_data_list
 
+## added to Option_Workbook as add_index_to_sheets
+## sub functions in Stock_Sheet and Option_Sheet
 #########################Tested
 def update_workbook_data_index(workbook_path, data_start_row, index_column):
     '''
@@ -220,6 +226,8 @@ def update_workbook_data_index(workbook_path, data_start_row, index_column):
     wb.save(workbook_path)
     print('Indexed each sheet. Saving workbook...')
 
+
+## added to Stock_Sheet as add_index
 #########################Tested
 def update_sheet_index(reference_sheet, date, start_row):
     '''
@@ -288,7 +296,7 @@ def delet_workbook_option_sheets(workbook_path):
     store_data_to_txt_file(file_name= 'deleted_sheets', data= data)
     wb.save(workbook_path)
 
-
+##added to Data_WorkSheet class as row_index_by_date()
 #########################Tested
 def find_index_0(worksheet,start, end, date_col, date_0):
     '''
@@ -328,6 +336,7 @@ def find_index_0(worksheet,start, end, date_col, date_0):
 
     return average_index
 
+## in Data_Worksheet as copy_data
 #########################Tested
 def copy_data(reference_sheet, main_sheet,index_start_row, index_end_row, reference_data_column, main_data_column):
     '''
@@ -357,6 +366,7 @@ def copy_data(reference_sheet, main_sheet,index_start_row, index_end_row, refere
             main_sheet.cell(row=i, column=main_data_column).value = reference_sheet.cell(row=i, column=reference_data_column).value
 
 
+## added to Option_Workbook as stock_meta_data and create_stock_sheet
 #########################Tested
 def update_stock_price_sheet(workbook_path, sheet_name, stock_sheet_index, sheet_start_date_cell,sheet_announce_date_cell, sheet_end_date_cell,  data_header_row, data_table_index, data_table_header, BDH_optional_arg=None, BDH_optional_val=None ):
     '''
@@ -397,7 +407,6 @@ def update_stock_price_sheet(workbook_path, sheet_name, stock_sheet_index, sheet
                                                                             end_date = reference_sheet[sheet_end_date_cell].value,
                                                                             optional_arg = BDH_optional_arg,
                                                                             optional_val = BDH_optional_val)
-
     #saves the newly added sheet to the workbook.
     wb.save(workbook_path)
     wb_name = workbook_path.split('/')[-1]
@@ -472,6 +481,8 @@ def update_stock_price_sheet(workbook_path, sheet_name, stock_sheet_index, sheet
 #             #set the value of the average column to the mean of the cell_values
 #             sheet.cell(row=i, column=max_col+1).value = statistics.mean(cell_values)
 
+
+###will most likes be removed
 #########################Tested
 def find_column_index_by_header(reference_wb, column_header, header_row):
     '''
@@ -504,6 +515,8 @@ def find_column_index_by_header(reference_wb, column_header, header_row):
     #return the dictionary with the data for each sheet
     return data_columns_by_sheet
 
+
+###added to Stock_Sheet as px_last_lst
 #########################Tested
 def stock_data_to_list(reference_wb,price_column_header, header_start_row, start_index, end_index):
     '''
@@ -526,6 +539,7 @@ def stock_data_to_list(reference_wb,price_column_header, header_start_row, start
     #return the data_list
     return data_list
 
+## removed condensed into the merger_mean and historic_mean in Stock_sheet
 #########################Tested
 def data_average(data_list):
     '''
@@ -533,7 +547,7 @@ def data_average(data_list):
     '''
     return floor(mean(data_list))
 
-
+## removed condensed into the merger_std and historic_std in Stock_sheet
 #########################Tested
 def data_standard_dev(data_list):
     '''
@@ -541,6 +555,7 @@ def data_standard_dev(data_list):
     '''
     return ceil(stdev(data=data_list))
 
+## removed condensed into the historic_mean and historic_std in Stock_sheet
 #########################Tested
 def historic_stock_mean_and_std(reference_wb_path,price_column_header, header_start_row, date_0):
     '''
@@ -562,6 +577,7 @@ def historic_stock_mean_and_std(reference_wb_path,price_column_header, header_st
 
     return(average, st_dev)
 
+## removed condensed into the merger_mean and merger_std in Stock_sheet
 #########################Tested
 def merger_stock_mean_and_std(reference_wb_path, price_column_header, header_start_row, date_0):
     '''
@@ -590,7 +606,7 @@ def is_in_range(num, high, low):
     '''        
     return low <=num <= high
 
-
+###add to Option_Workbook as fill_option_sheet
 #########################Tested
 def fill_option_wb_empty_cells(reference_wb_path, column_start, row_start, fill_value):
     '''
@@ -612,6 +628,8 @@ def fill_option_wb_empty_cells(reference_wb_path, column_start, row_start, fill_
 
 
 
+
+##added to the Option_Sheet class as fill_empty_cells
 #########################Tested
 def fill_option_sheet_empty_cells(reference_sheet, column_start, row_start, fill_value):
     '''
@@ -628,7 +646,7 @@ def fill_option_sheet_empty_cells(reference_sheet, column_start, row_start, fill
             if reference_sheet.cell(row=j, column=i).value == None:
                 reference_sheet.cell(row=j, column=i).value = fill_value
 
-
+## added to Data_Worksheet as letter_to_col_index
 #########################Tested
 def convert_to_numbers(lst):
     '''
@@ -739,6 +757,9 @@ def add_extra_sheets(reference_wb_path, sheet_name, ticker_column, description_c
 #             reference_sheet.cell(row=i, column=calculation_col).value = days_till_expiration(start_date=curr_date, 
 #                                                                                            expiration_date=exp_date)
 
+
+
+### removed from here. will be added to an Option Class
 #########################Tested
 def days_till_expiration(start_date, expiration_date):
     '''
