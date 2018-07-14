@@ -10,21 +10,27 @@ path = os.path.join(BASE_DIR,'ma_option_vol')
 sys.path.append(path)
 
 from data_workbooks import Data_WorkSheet, Merger_Sample_Data
-from base_test import Test_Base
-
 import update_excel_workbooks as uxlw
 
-class Test_Update_Excel_Workbooks(Test_Base):
+import base_test
+def setUpModule():
+	base_test.setUpModule()
+
+def tearDownModule():
+	base_test.tearDownModule()
+
+class Test_Update_Excel_Workbooks(unittest.TestCase):
 	@classmethod
-	def tearDownClass(cls):
-		# import pdb; pdb.set_trace()
-		super().tearDownClass()
+	def setUpClass(cls):
+		cls.test_dir_path = base_test.TEST_DIR_PATH
+		cls.acquirer_path = base_test.TEST_ACQUIRER_PATH
+		cls.target_path = base_test.TEST_TARGET_PATH
 
 	def setUp(self):
 		pass
 
-	def tearDown(self):
-		super().tearDown()
+	def tearDown(slef):
+		base_test.clean_up()
 
 	def test_format_option_description_call(self):
 		security_name = 'BBG0079FD3F4 Equity'	
