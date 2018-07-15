@@ -37,7 +37,7 @@ def col_index_func(data_ws, col):
 	''' mock function to test the decorators'''
 	return 10
 
-@unittest.skip('Tested')
+# @unittest.skip('Tested')
 class Test_Data_Worksheet_Decorator_Behavior(unittest.TestCase):
 	@classmethod
 	def setUpClass(self):
@@ -76,7 +76,7 @@ class Test_Data_Worksheet_Decorator_Behavior(unittest.TestCase):
 			col_index_func(self.mock_data_ws, col=self.out_col_range)
 		self.assertEqual(str(err.exception), self.col_err_msg)
 
-@unittest.skip('Tested')
+# @unittest.skip('Tested')
 class Test_Data_WorkSheet(unittest.TestCase):
 	def setUp(self):
 		self.path = 'samples/test_sample.xlsx'
@@ -172,7 +172,7 @@ class Test_Data_WorkSheet(unittest.TestCase):
 		result = self.data_ws.letter_to_col_index('AZ')
 		self.assertEqual(result, [52])
 
-@unittest.skip('Tested')
+# @unittest.skip('Tested')
 class Test_Data_Worksheet_copy_data(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -210,7 +210,7 @@ class Test_Data_Worksheet_copy_data(unittest.TestCase):
 			test_val = self.test_data_ws.get_value(row=i, col=1)
 			self.assertEqual(ref_val, test_val)
 
-@unittest.skip('Tested')
+# @unittest.skip('Tested')
 class Test_Merger_Sample_Data(unittest.TestCase):
 	def setUp(self):
 		self.path = 'samples/test_sample.xlsx'
@@ -272,7 +272,7 @@ class Test_Treasury_Sample_Data(unittest.TestCase):
 class Test_VIX_Sample_Data(unittest.TestCase):
 	pass
 
-@unittest.skip('Tested')
+# @unittest.skip('Tested')
 class Test_Option_Chain_Sheet(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -299,7 +299,6 @@ class Test_Option_Chain_Sheet(unittest.TestCase):
 		value = self.opt_chain2.get_value(row=random_row, col=2)
 		self.assertIn('=BDP(', value)
 
-	@unittest.skip('Tested, expensive to run')
 	def test_sheet_BDP_description(self):
 		#loop through the tickers and assert that they don't have a description yet
 		for i in range(1, self.opt_chain2.ws_width+1, 2):
@@ -330,7 +329,7 @@ class Test_Option_Chain_Sheet(unittest.TestCase):
 		self.assertEqual(date, dt.datetime.strptime('12/20/14', '%m/%d/%y'))
 		self.assertEqual(strike, 18)
 
-@unittest.skip('Tested')
+# @unittest.skip('Tested')
 class Test_Option_Chain_Sheet_option_exp_in_range(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -358,7 +357,7 @@ class Test_Option_Chain_Sheet_option_exp_in_range(unittest.TestCase):
 											from_start=8, past_announcemt=60)
 		self.assertFalse(value)
 
-@unittest.skip('Tested')
+# @unittest.skip('Tested')
 class Test_Stock_Sheet(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -379,42 +378,44 @@ class Test_Stock_Sheet(unittest.TestCase):
 		price_list = self.stock_sheet.px_last_lst()
 		self.assertIsInstance(price_list, list)
 		lst_len = len(price_list)
-		expected_len = len(range(self.stock_sheet.header_index+1, self.stock_sheet.ws_length+1))
-		self.assertEqual(lst_len, expected_len)
-		for i, item in enumerate(price_list, start=self.stock_sheet.header_index+1):
-			self.assertEqual(item, self.stock_sheet.get_value(row=i, col=3))
+		expected_list = [self.stock_sheet.get_value(row=x, col=3) 
+				for x in range(self.stock_sheet.header_index+1, self.stock_sheet.ws_length+1)
+				if self.stock_sheet.get_value(row=x, col=3) != 0]
+		self.assertEqual(price_list, expected_list)
 
 	def test_merger_mean(self):
 		mean = self.stock_sheet.merger_mean()
 		#mean verified in excel
-		self.assertEqual(mean, 54)
+		self.assertEqual(mean, 55)
 		self.assertIsInstance(mean, int)
 		
 	def test_merger_std(self):
 		std = self.stock_sheet.merger_std()
 		#standard deviation verified in excel
-		self.assertEqual(std, 7)
+		self.assertEqual(std, 3)
 		self.assertIsInstance(std, int)
 
 	def test_historic_mean(self):
 		mean = self.stock_sheet.historic_mean()
 		#mean verified in excel
-		self.assertEqual(mean, 47)
+		self.assertEqual(mean, 49)
 		self.assertIsInstance(mean, int)
 
 	def test_historic_std(self):
 		std = self.stock_sheet.historic_std()
 		#standard deviation verified in excel
-		self.assertEqual(std, 10)
+		self.assertEqual(std, 4)
 		self.assertIsInstance(std, int)
 
 	def test_is_strike_in_range(self):
 		# def is_strike_in_range(self, stike, std_multiple=1.5):
 		#we know mm=54 and ms=7, hm=47 and hs=10
 		in_range, below_range, above_range = 54, 20, 80
-		self.assertTrue(self.stock_sheet.is_strike_in_range(in_range))
-		self.assertFalse(self.stock_sheet.is_strike_in_range(below_range))
-		self.assertFalse(self.stock_sheet.is_strike_in_range(above_range))
+		mm, ms = self.stock_sheet.merger_mean(), self.stock_sheet.merger_std()
+		hm, hs = self.stock_sheet.historic_mean(), self.stock_sheet.historic_std()
+		self.assertTrue(self.stock_sheet.is_strike_in_range(in_range, mm, ms, hm, hs))
+		self.assertFalse(self.stock_sheet.is_strike_in_range(below_range, mm, ms, hm, hs))
+		self.assertFalse(self.stock_sheet.is_strike_in_range(above_range, mm, ms, hm, hs))
 
 	def test_add_index(self):
 		#show that before the function is run all values are None
@@ -428,7 +429,7 @@ class Test_Stock_Sheet(unittest.TestCase):
 			self.assertIsInstance(value, int)
 			self.assertEqual(value, i-index)
 
-@unittest.skip('Tested')
+# @unittest.skip('Tested')
 class Test_Option_Sheet(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -455,7 +456,7 @@ class Test_Option_Sheet(unittest.TestCase):
 			start+=dt.timedelta(days=1)
 		cls.option_wb.save()
 
-	@unittest.skip('Untested fill out')
+	# @unittest.skip('Untested fill out')
 	def test_option_sheet_details(self):
 		pass
 		
@@ -575,7 +576,7 @@ class Test_Option_Workbook(unittest.TestCase):
 		self.assertEqual(self.opt_wb1.option_sheetnames, [sheet_name])
 		self.assertIsInstance(self.opt_wb1.wb[sheet_name], Worksheet)
 
-	# @unittest.skip('Expensive test to run')
+
 	def test_add_option_sheets(self):
 		# self.assertEqual(self.opt_wb1.option_sheetnames, None)
 		self.opt_wb1.add_option_sheets()
@@ -604,7 +605,7 @@ def option_func(opt_wb):
 	''' mock function to test the decorators'''
 	return 10
 
-@unittest.skip('Tested')
+# @unittest.skip('Tested')
 class Test_Option_Workbook_Decorator_Behavior(unittest.TestCase):
 	@classmethod
 	def setUpClass(self):
