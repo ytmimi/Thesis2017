@@ -94,7 +94,7 @@ class Bloomberg_Excel():
 			else:
 				return '"{}"'.format(item)
 		elif type(item) == dt.datetime or type(item) == dt.date:
-			return item.strftime('%Y%m%d')
+			return '"{}"'.format(item.strftime('%Y%m%d'))
 		else:
 			return '"{}"'.format(item)
 
@@ -105,12 +105,12 @@ class Bloomberg_Excel():
    						"Govt", "Corp", " Mtge", "M-Mkt", "Muni", "Pfd", "Equity", "Comdty", 
    						"Index", or "Crncy" please provide the type. Otherwise leave type_=None.
 		'''
-		security = self.check_input(security)
+		# security = 
 		if type_ != None and is_cell_ref(security):
 			security = 'CONCATENATE({}, " ", {})'.format(security, type_)
 		elif type_ != None and not is_cell_ref(security):
 			security = '{} {}'.format(security, type_)
-		return security
+		return self.check_input(security)
 
 	def check_optional(self, arguments, values):
 		if arguments == values == None:
