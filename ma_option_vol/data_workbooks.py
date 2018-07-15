@@ -65,10 +65,10 @@ class Data_WorkSheet:
 			values[i] = {'column':col, 'value':value}
 		return values
 
+	@is_row_idx_in_range
 	@is_col_idx_in_range
 	def get_value(self, *, row, col):
-		data = self.row_values(row=row)	
-		return data[col]['value']
+		return self.ws.cell(row=row, column=col).value
 
 	def get_coordinate(self, row, col):
 		''' Given a column and a row, an excel coordinate is returned'''
@@ -205,7 +205,6 @@ class Option_Chain_Sheet(Data_WorkSheet):
 			strike_price = float(option_data[-1][1:])
 		return [option_type, expiration_date, strike_price]
 
-
 	def is_option_exp_in_range(self, exp_date, from_start=8, past_announcemt=60):
 		'''
 		return True if the given expeiration date > a certain number of days from the start
@@ -214,8 +213,6 @@ class Option_Chain_Sheet(Data_WorkSheet):
 		exp_from_start = (exp_date - self.start_date).days
 		exp_past_announcemt = (exp_date - self.announce_date).days
 		return (exp_from_start > from_start) and (exp_past_announcemt < past_announcemt)
-
-						
 
 class Stock_Sheet(Data_WorkSheet):
 	def __init__(self, workbook, sheet_name, column_header_index=8):
@@ -230,19 +227,19 @@ class Stock_Sheet(Data_WorkSheet):
 		'''returns the time series of traded prices'''
 		if start_row == None and end_row == None:
 			indx_range = range(self.header_index+1, self.ws_length+1)
-			return [self.get_value(row=i, col=px_col) for i in indx_range]
+			return [self.get_value(row=i, col=px_col) for i in indx_range if self.get_value(row=i, col=px_col)!=0]
 		else:
-			indx_range = range(start_row, end_row)
-			return [self.get_value(row=i, col=px_col) for i in indx_range]
+			indx_range = range(start_row, end_row+1)
+			return [self.get_value(row=i, col=px_col) for i in indx_range if self.get_value(row=i, col=px_col) !=0]
 
 	def merger_mean(self):
 		start_idx = self.row_index_by_date(self.announce_date)
-		lst = self.px_last_lst(start_row=start_idx, end_row=self.ws_length+1)
+		lst = self.px_last_lst(start_row=start_idx, end_row=self.ws_length)
 		return floor(mean(lst))
 
 	def merger_std(self):
 		start_idx = self.row_index_by_date(self.announce_date)
-		lst = self.px_last_lst(start_row=start_idx, end_row=self.ws_length+1)
+		lst = self.px_last_lst(start_row=start_idx, end_row=self.ws_length)
 		return ceil(stdev(lst))
 
 	def historic_mean(self):
@@ -255,16 +252,15 @@ class Stock_Sheet(Data_WorkSheet):
 		lst = self.px_last_lst(start_row=self.header_index+1, end_row=end_idx)
 		return ceil(stdev(lst))
 
-	def is_strike_in_range(self, strike, std_multiple=1.5):
+	def is_strike_in_range(self, strike, mm, ms, hm, hs, std_multiple=1.5):
 		''' 
 		checks that the given strike is either between the historic or merger mean
 		std_multiple increase (decrease) the std to check
 		'''
-		mm, ms = self.merger_mean(), self.merger_std()
-		hm, hs = self.historic_mean(), self.historic_std()
 		mhigh, mlow = mm+ms*std_multiple, mm-ms*std_multiple
-		hhigh, hlow = hm+hs*std_multiple, mm-ms*std_multiple
-		return (mlow <= strike <= mhigh or hlow <= strike <= hhigh)
+		hhigh, hlow = hm+hs*std_multiple, hm-hs*std_multiple
+		return((mlow <= strike <= mhigh) or (hlow <= strike <= hhigh))
+		
 
 	def add_index(self):
 		''' Fills in the index value of the given sheet'''
@@ -385,15 +381,21 @@ class Option_Workbook:
 
 	@has_stock_sheet
 	def add_option_sheets(self, BDH_args=None, BDH_vals=None):
-		for i in range(1, self.chain_sheet.ws_width):
+		ss = self.stock_sheet
+		mm, ms, = ss.merger_mean(), ss.merger_std()
+		hm, hs  = ss.historic_mean(), ss.historic_std()
+		for i in range(1, self.chain_sheet.ws_width,2):
 			for j in range(10, self.chain_sheet.ws_length+1):
 				ticker = self.chain_sheet.get_value(row=j, col=i)
 				description = self.chain_sheet.get_value(row=j, col=i+1)
 				#check if the ticker and description values are not None
-				if ticker != None and self.proper_desciption_format(description):
-					type_, exp_date, strike  = self.chain_sheet.parse_option_description(description)
-					if self.stock_sheet.is_strike_in_range(strike) and self.chain_sheet.is_option_exp_in_range(exp_date):
+				if self.proper_desciption_format(description) and ticker != None:
+					type_, exp_date, strike = self.chain_sheet.parse_option_description(description)
+					#bottle neck is the is_strike_in_range()
+					if ss.is_strike_in_range(strike, mm, ms, hm, hs) and self.chain_sheet.is_option_exp_in_range(exp_date):
 						self.create_option_sheet(ticker, description, BDH_args, BDH_vals)
+				elif ticker == None:
+					break
 
 	def proper_desciption_format(self, description):
 		'''Returns true if the description matches the designated option re'''
