@@ -166,7 +166,7 @@ def format_option_description(security_name, option_description):
     option_description should be a string that looks similar to 'PFE US 12/20/14 P18'
     return formatted option data
     '''
-     warnings.warn('''deprecated: moved to data_workbooks module. For simple parsing of an option description instantiate an Option_Chain_Sheet 
+    warnings.warn('''deprecated: moved to data_workbooks module. For simple parsing of an option description instantiate an Option_Chain_Sheet 
         and use the parse_option_description mehtod. for a complete, formated description use the option_metadata, mehtod in 
         the Option_Workbook class.''', DeprecationWarning)
     #will split the option_description by whitespace into a list that looks like: ['PFE', 'US', '12/20/14', 'P18']
@@ -197,7 +197,7 @@ def update_workbook_data_index(workbook_path, data_start_row, index_column):
     '''
     Given a workbook, loop through all the sheets of that workbook and update the index for each sheet.
     '''
-     warnings.warn('''deprecated: moved to data_workbooks module. Use the add_index_to_sheets
+    warnings.warn('''deprecated: moved to data_workbooks module. Use the add_index_to_sheets
         method in the Option_Workbook class''',DeprecationWarning)
     #loads an excel workbook given the file path to that workbook.
     wb = openpyxl.load_workbook(workbook_path)
