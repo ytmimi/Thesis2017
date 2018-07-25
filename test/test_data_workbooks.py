@@ -12,11 +12,14 @@ path = os.path.join(BASE_DIR,'ma_option_vol')
 sys.path.append(path)
 
 #class imports
-from data_workbooks import (Data_WorkSheet, Merger_Sample_Data, Option_Workbook,
-							Option_Chain_Sheet, Stock_Sheet,Option_Sheet)	
+from data_workbooks import (Data_WorkSheet, Merger_Sample_Data, Treasury_Sample_Data, 
+							VIX_Sample_Data, Option_Workbook, Option_Chain_Sheet, 
+							Stock_Sheet,Option_Sheet)	
 #decorator imports
 from data_workbooks import (is_row_idx_in_range, is_col_idx_in_range, 
 							has_stock_sheet, has_option_sheets)
+
+from options import Option
 
 import base_test
 
@@ -263,14 +266,53 @@ class Test_Merger_Sample_Data(unittest.TestCase):
 		#test that the output was filtered by the include list
 		self.assertEqual(output, values)
 
-@unittest.skip('untested test')
+
+# @unittest.skip('Tested')
 class Test_Treasury_Sample_Data(unittest.TestCase):
-	pass
+	@classmethod
+	def setUpClass(cls):
+		cls.treasury_sheet = Treasury_Sample_Data()
+		cls.date = dt.datetime(year=2013, month=3, day=27)
+
+	def test_row_index_by_date(self):
+		value = self.treasury_sheet.row_index_by_date(self.date)
+		self.assertEqual(value, 292)
+	
+	def test_rf_3m(self):
+		value = self.treasury_sheet.rf_3m_on(date=self.date)	
+		self.assertEqual(value, 0.00089)
+
+	def test_rf_6m(self):
+		value = self.treasury_sheet.rf_6m_on(date=self.date)
+		self.assertEqual(value, 0.00109)
+
+	def test_rf_12m(self):
+		value = self.treasury_sheet.rf_12m_on(date=self.date)
+		self.assertEqual(value, 0.00124)
+
+	def test_is_negative_above(self):
+		self.assertEqual(self.treasury_sheet.is_negative(10), 10)
+
+	def test_is_negative_below(self):
+		self.assertEqual(self.treasury_sheet.is_negative(-10), 0)
 
 
-@unittest.skip('unittest test')
+# @unittest.skip('Tested')
 class Test_VIX_Sample_Data(unittest.TestCase):
-	pass
+	@classmethod
+	def setUpClass(cls):
+		cls.vix_sheet = VIX_Sample_Data()
+		cls.date = dt.datetime(year=2013, month=3, day=27)
+
+	def test_row_index_by_date(self):
+		value = self.vix_sheet.row_index_by_date(self.date)
+		self.assertEqual(value, 292)
+	
+	def test_vix_on(self):
+		value = self.vix_sheet.get_vix_on(date=self.date)
+		self.assertEqual(value, 13.15)
+		
+	
 
 # @unittest.skip('Tested')
 class Test_Option_Chain_Sheet(unittest.TestCase):
@@ -322,12 +364,6 @@ class Test_Option_Chain_Sheet(unittest.TestCase):
 				else:
 					self.assertEqual(value, None)
 
-	def test_parse_option_description(self):
-		description = 'PFE US 12/20/14 P18'
-		type_, date, strike = self.opt_chain1.parse_option_description(description)
-		self.assertEqual(type_, 'Put')
-		self.assertEqual(date, dt.datetime.strptime('12/20/14', '%m/%d/%y'))
-		self.assertEqual(strike, 18)
 
 # @unittest.skip('Tested')
 class Test_Option_Chain_Sheet_option_exp_in_range(unittest.TestCase):
@@ -368,11 +404,20 @@ class Test_Stock_Sheet(unittest.TestCase):
 		cls.ws_name = cls.wb.sheetnames[1]
 		# print(cls.ws_name)
 		cls.stock_sheet = Stock_Sheet(cls.wb, cls.ws_name)
+		cls.date = dt.datetime(year=2013,month=7, day=24)
 		stock_lables = ['Company Name','Ticker','Start Date', 'Announcement Date','End Date']
 
 	@unittest.skip('Untested fill out')
 	def test_stock_sheet_details(self):
 		pass
+
+	def test_row_index_by_date(self):
+		value = self.stock_sheet.row_index_by_date(date=self.date)
+		self.assertEqual(value, 16)
+
+	def test_get_price_on(self):
+		value = self.stock_sheet.get_price_on(date=self.date)
+		self.assertEqual(value, 43.64)
 
 	def test_px_last_lst(self):
 		price_list = self.stock_sheet.px_last_lst()
@@ -455,8 +500,11 @@ class Test_Option_Sheet(unittest.TestCase):
 			row+=1
 			start+=dt.timedelta(days=1)
 		cls.option_wb.save()
+		cls.treasury_sheet = Treasury_Sample_Data()
+		cls.date = cls.stock_sheet.ws['B12'].value
 
-	# @unittest.skip('Untested fill out')
+
+	@unittest.skip('Untested fill out')
 	def test_option_sheet_details(self):
 		pass
 		
@@ -481,14 +529,36 @@ class Test_Option_Sheet(unittest.TestCase):
 			self.assertEqual(option_index, None)
 		#run the function:
 		self.option_sheet.copy_index(self.stock_sheet)
-		for i in range(self.stock_sheet.header_index, self.stock_sheet.ws_length+1):
+		for i in range(self.stock_sheet.header_index+1, self.stock_sheet.ws_length+1):
 			option_index = self.option_sheet.get_value(row=i, col=1)
 			stock_index = self.stock_sheet.get_value(row=i, col=1)
 			self.assertEqual(option_index, stock_index)
 
-	@unittest.skip('Fill out method body')
-	def test_iv_calculation(self):
-		pass
+	def test_get_risk_free_rate_3_6_or_12(self):
+		for rate in [3, 6, 12]:
+			rf = self.option_sheet.get_risk_free_rate(self.treasury_sheet, self.date, rate)
+			self.assertIsInstance(rf, float)
+
+	def test_get_risk_free_rate_wrong_num(self):
+		message = 'Rate must be set to either 3, 6, or 12'
+		with self.assertRaises(ValueError)as err:
+			self.option_sheet.get_risk_free_rate(self.treasury_sheet, self.date, 10)
+		self.assertEqual( message, str(err.exception))
+
+	def test_iv_calculation_correct(self):
+		header_row = self.option_sheet.header_index
+		col = self.option_sheet.ws_width+1
+		self.option_sheet.sheet_iv_calculation(col, self.stock_sheet, 
+						self.treasury_sheet, rate=3, heading='3Month IV')
+		self.assertEqual(self.option_sheet.get_value(row=header_row, col=col), '3Month IV')
+
+	def test_iv_calculation_error(self):
+		message = 'Rate must be set to either 3, 6, or 12'
+		col = self.option_sheet.ws_width+1
+		with self.assertRaises(ValueError)as err:
+			self.option_sheet.sheet_iv_calculation(col, self.stock_sheet, 
+						self.treasury_sheet,rate=10, heading='3Month IV')
+		self.assertEqual( message, str(err.exception))
 
 	@unittest.skip('Fill out method body')
 	def test_vega_calculation(self):

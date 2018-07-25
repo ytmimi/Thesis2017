@@ -10,6 +10,7 @@ from CONSTANTS import OPTION_SHEET_PATTERN_INT as ospi
 from CONSTANTS import OPTION_SHEET_PATTERN_FLOAT as ospf 
 		
 from add_bloomberg_excel_functions import Bloomberg_Excel as bbe
+from options import Option
 
 def is_row_idx_in_range(func):
 	def inner(*args, **kwarg):
@@ -30,10 +31,10 @@ def is_col_idx_in_range(func):
 	return inner
 
 class Data_WorkSheet:
-	def __init__(self, workbook, sheet_name, column_header_index=1):
+	def __init__(self, workbook, sheet_name, header_index=1):
 		self.wb = workbook
 		self.ws = self.wb[sheet_name]
-		self.header_index = column_header_index
+		self.header_index = header_index
 
 	def __str__(self):
 		return self.ws.title
@@ -89,12 +90,13 @@ class Data_WorkSheet:
 		count = 0
 		found = False
 		while not found:
-			if count <= log(idx_diff, 2)+1:
+			if count <log(idx_diff, 2):
 				count +=1
 			else:
 				raise IndexError('Date not found')
-			avg_idx = floor(mean([start_idx, end_idx]))
+			avg_idx = self.check_index_bounds(floor(mean([start_idx, end_idx])))
 			curr_date = self.get_value(row=avg_idx, col=date_col)
+			# print(f'{avg_idx}: {curr_date}, {date} Sheet: {self}')
 			if (date == curr_date):
 				found = True
 			elif (date > curr_date):
@@ -103,7 +105,13 @@ class Data_WorkSheet:
 				end_idx = avg_idx -1
 		return avg_idx
 
-	def copy_data(self, ref_sheet, ref_col, main_col, ref_start_row=None, ref_end_row=None):
+	def check_index_bounds(self, idx):
+		if idx <= self.header_index+1: return self.header_index+1
+		elif idx >=self.ws_length: return self.ws_length
+		else: return idx
+
+	def copy_data(self, ref_sheet, ref_col, main_col, 
+				ref_start_row=None, ref_end_row=None):
 		'''
 		Duplicates column data in the reference sheet into this sheet
 		'''
@@ -127,8 +135,9 @@ class Data_WorkSheet:
 		return [openpyxl.utils.column_index_from_string(x) for x in letters]
 
 class Merger_Sample_Data(Data_WorkSheet):
-	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
+	def __init__(self, workbook=openpyxl.load_workbook(MERGER_SAMPLE), 
+				sheet_name='Filtered Sample Set'):
+		super().__init__(workbook, sheet_name)
 
 	def row_values(self, row, include=[]):
 		'''
@@ -142,23 +151,70 @@ class Merger_Sample_Data(Data_WorkSheet):
 			return output
 		return data
 
+def found_index(func):
+	def inner(*args, **kwargs):
+		index = args[0].date_indexes.get(kwargs['date'])
+		if index == None:
+			index = args[0].row_index_by_date(kwargs['date'])
+			args[0].date_indexes[kwargs['date']] = index
+		return func(*args, date=kwargs['date'])
+	return inner
+
 class Treasury_Sample_Data(Data_WorkSheet):
-	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
+	def __init__(self, workbook=openpyxl.load_workbook(TREASURY_WORKBOOK_PATH), 
+				sheet_name='Rates', header_index=1, date_col=2, col_3m=3, col_6m=4, col_12m=5):
+		super().__init__(workbook, sheet_name, header_index)
+		self.date_col = date_col
+		self.col_3m = col_3m
+		self.col_6m = col_6m
+		self.col_12m = col_12m
+		self.date_indexes = {}
 
-	def rf_3m(self, indx):
-		pass
+	def row_index_by_date(self, date):
+		return super().row_index_by_date(date, date_col=self.date_col)
 
-	def rf_6m(self, indx):
-		pass
+	@found_index
+	def rf_3m_on(self, *, date):
+		'''return the 3 month risk free rate on the given date'''
+		index = self.date_indexes.get(date)
+		value = self.get_value(row=index, col=self.col_3m)/100
+		return self.is_negative(value)
 
-	def rf_12m(self, indx):
-		pass
+	@found_index
+	def rf_6m_on(self, *, date):
+		'''return the 6 month risk free rate on the given date'''
+		index = self.date_indexes.get(date)
+		value = self.get_value(row=index, col=self.col_6m)/100
+		return self.is_negative(value)
+
+	@found_index
+	def rf_12m_on(self, *, date):
+		'''return the 12 month risk free rate on the given date'''
+		index = self.date_indexes.get(date)
+		value = self.get_value(row=index, col=self.col_12m)/100
+		return self.is_negative(value)
+
+	@staticmethod
+	def is_negative(num):
+		if num <0: return 0
+		else: return num
 
 class VIX_Sample_Data(Data_WorkSheet):
-	def __init__(self, workbook, sheet_name, column_header_index=1):
-		super().__init__(workbook, sheet_name, column_header_index=1)
+	def __init__(self, workbook=openpyxl.load_workbook(VIX_INDEX_PATH), sheet_name='VIX Data', 
+				header_index=1, date_col=4, px_col=5):
+		super().__init__(workbook, sheet_name, header_index)
+		self.date_col = date_col
+		self.px_col = px_col
+		self.date_indexes = {}
 
+	def row_index_by_date(self, date):
+		return super().row_index_by_date(date, date_col=self.date_col)
+
+	@found_index
+	def get_vix_on(self, *, date):
+		'''returns the value of the vix on the given date'''
+		index = self.date_indexes.get(date)
+		return self.get_value(row=index, col=self.px_col)
 
 class Option_Chain_Sheet(Data_WorkSheet):
 	def __init__(self, workbook, sheet_name='Options Chain'):
@@ -188,23 +244,6 @@ class Option_Chain_Sheet(Data_WorkSheet):
 				else:
 					break
 
-	def parse_option_description(self, description):
-		'''
-		description should be a string that looks similar to 'PFE US 12/20/14 P18'
-		return formatted option data
-		'''
-		option_data = description.split(' ')
-		if option_data[-1][0] == 'P':
-			option_type = 'Put'
-		elif option_data[-1][0] == 'C':
-			option_type = 'Call'
-		expiration_date = dt.datetime.strptime(option_data[2], '%m/%d/%y')
-		try:
-			strike_price = int(option_data[-1][1:])
-		except:
-			strike_price = float(option_data[-1][1:])
-		return [option_type, expiration_date, strike_price]
-
 	def is_option_exp_in_range(self, exp_date, from_start=8, past_announcemt=60):
 		'''
 		return True if the given expeiration date > a certain number of days from the start
@@ -215,13 +254,30 @@ class Option_Chain_Sheet(Data_WorkSheet):
 		return (exp_from_start > from_start) and (exp_past_announcemt < past_announcemt)
 
 class Stock_Sheet(Data_WorkSheet):
-	def __init__(self, workbook, sheet_name, column_header_index=8):
-		super().__init__(workbook, sheet_name, column_header_index)
+	def __init__(self, workbook, sheet_name, header_index=8, date_col=2, px_col=3):
+		super().__init__(workbook, sheet_name, header_index)
+		self.date_col = date_col
+		self.px_col = px_col
 		self.company_name = self.ws['B1'].value
 		self.ticker = self.ws['B2'].value
 		self.start_date = self.ws['B3'].value
 		self.announce_date = self.ws['B4'].value
 		self.end_date = self.ws['B5'].value
+		self.date_indexes = {}
+
+
+	def row_index_by_date(self, date):
+		return super().row_index_by_date(date, date_col=self.date_col)
+
+	@found_index
+	def get_price_on(self, *, date):
+		index = self.date_indexes.get(date)
+		return self.get_value(row=index, col=self.px_col)
+
+	@found_index
+	def get_index_on(self, *, date):
+		index = self.date_indexes.get(date)
+		return self.get_value(row=index, col=1)
 
 	def px_last_lst(self, px_col=3, start_row=None, end_row=None):
 		'''returns the time series of traded prices'''
@@ -261,7 +317,6 @@ class Stock_Sheet(Data_WorkSheet):
 		hhigh, hlow = hm+hs*std_multiple, hm-hs*std_multiple
 		return((mlow <= strike <= mhigh) or (hlow <= strike <= hhigh))
 		
-
 	def add_index(self):
 		''' Fills in the index value of the given sheet'''
 		index_0 = self.row_index_by_date(self.announce_date)
@@ -270,11 +325,16 @@ class Stock_Sheet(Data_WorkSheet):
 
 
 class Option_Sheet(Data_WorkSheet):
-	def __init__(self, workbook, sheet_name, column_header_index=8):
-		super().__init__(workbook, sheet_name, column_header_index)
-		self.option = 'option'
-		#Define an option class
-		#the class should implement a lot of whats already in iv_calculations.py
+	def __init__(self, workbook, sheet_name, header_index=8, date_col=2, px_col=3):
+		super().__init__(workbook, sheet_name, header_index)
+		self.date_col = date_col
+		self.px_col = px_col
+		self.ticker = self.ws['B1'].value
+		self.description = self.ws['B2'].value
+		self.option = Option.from_description(self.description)
+
+	def row_index_by_date(self, date):
+		return super().row_index_by_date(date, date_col=self.date_col)
 	
 	def fill_empty_cells(self, fill_value=0):
 		for i in range(3, self.ws_width+1):
@@ -282,14 +342,78 @@ class Option_Sheet(Data_WorkSheet):
 				if self.get_value(row=j, col=i) == None:
 					self.set_value(j, i, fill_value)
 
+	def get_stock_index(self, stock_sheet, date):
+		try:
+			stock_sheet.get_index_on(date=date)
+		except IndexError as e:
+			return 'N/A'
+
 	def copy_index(self, stock_sheet):
 		'''copies the numeric index from the given stock_sheet'''
-		self.copy_data(stock_sheet, 1, 1)
+		# self.copy_data(stock_sheet, 1, 1)
+		for i in range(self.header_index+1, self.ws_length+1):
+			date = self.get_value(row=i, col=self.date_col)
+			if date != None:
+				index = self.get_stock_index(stock_sheet, date)
+				self.set_value(i, 1, index)
+			else: break
 
-	def iv_calculation(self):
-		pass
+	def add_iv_calculation(self, row, col, date, stock_price, rf_rate):
+		option_price = self.get_value(row=row, col=self.px_col)
+		if option_price == None or option_price == 0 or stock_price == 0: 
+			self.set_value(row, col, 0)
+		else: 
+			iv = self.option.implied_volatility(date, stock_price, option_price, rf_rate)
+			self.set_value(row, col, iv)
 
-	def vega_calculation(self):
+	def add_vega_calculation(self, row, col, date, stock_price, rf_rate):
+		option_price = self.get_value(row=row, col=self.px_col)
+		if option_price > 0:
+			vega = self.option.vega(date, stock_price, option_price, rf_rate)
+			self.set_value(row, col, iv)
+		else: self.set_value(row, col, 0)
+
+	def get_stock_price(self, stock_sheet, date):
+		try:
+			return stock_sheet.get_price_on(date=date)
+		except IndexError as e:
+			return 0
+
+	def get_risk_free_rate(self, treasury_sheet, date, rate):
+		'''Returns the appropriate risk free rate based on the rate argument'''
+		try:
+			if rate != 3 and rate != 6 and rate != 12:
+				raise ValueError('Rate must be set to either 3, 6, or 12')
+			else:
+				if rate == 3: return treasury_sheet.rf_3m_on(date=date)
+				elif rate == 6: return treasury_sheet.rf_6m_on(date=date)
+				else: return treasury_sheet.rf_12m_on(date=date)
+		except IndexError as e:
+			return 0
+
+		
+
+	def sheet_iv_calculation(self, col, stock_sheet, treasury_sheet, *,rate, heading):
+		''' 
+		col: the colom to store the calculation in 
+		stock_sheet: the stock sheet associated with the option sheet
+		teasury_sheet: sheet containing treasury data
+		rate: either 3, 6, or 12 depending on which type of treasury you want
+		'''
+		self.set_value(self.header_index, col, heading)
+		for i in range(self.header_index+1, self.ws_length+1):
+			date = self.get_value(row=i, col=self.date_col)
+			if date != None:
+				stock_price = self.get_stock_price(stock_sheet, date)
+				rf_rate = self.get_risk_free_rate(treasury_sheet, date, rate)
+				self.add_iv_calculation(i, col, date, stock_price, rf_rate)
+			else:
+				break
+
+	def sheet_vega_calculation(self,row, stock_sheet, treasury_sheet):
+		date = self.get_value(row=row, col=self.date_col)
+		# price = self.get_value(row=row, col=3)
+		# return self.option.vega(date, stock_price, price, rf_rate)
 		pass
 
 def has_stock_sheet(func):
@@ -320,6 +444,7 @@ class Option_Workbook:
 		self.chain_sheet = Option_Chain_Sheet(self.wb, 'Options Chain')
 		self.data_index = ['Index', 'Date']
 		self.data_headers = ['PX_LAST']
+		# self.treasury_sheet = Treasury_Sample_Data()
 
 	@property
 	def stock_sheet(self):
@@ -364,7 +489,7 @@ class Option_Workbook:
 										type_='Equity', opt_args=BDH_args, opt_vals=BDH_vals)
 
 	def option_meta_data(self, ticker, description):
-		option_data = self.chain_sheet.parse_option_description(description)
+		option_data = Option.parse_option_description(description)
 		data_labels = ['Ticker', 'Description', 'Type', 'Expiration Date', 'Strike Price']
 		return zip(data_labels, [ticker, description]+option_data)
 
@@ -390,7 +515,7 @@ class Option_Workbook:
 				description = self.chain_sheet.get_value(row=j, col=i+1)
 				#check if the ticker and description values are not None
 				if self.proper_desciption_format(description) and ticker != None:
-					type_, exp_date, strike = self.chain_sheet.parse_option_description(description)
+					type_, exp_date, strike = Option.parse_option_description(description)
 					#bottle neck is the is_strike_in_range()
 					if ss.is_strike_in_range(strike, mm, ms, hm, hs) and self.chain_sheet.is_option_exp_in_range(exp_date):
 						self.create_option_sheet(ticker, description, BDH_args, BDH_vals)
@@ -415,6 +540,30 @@ class Option_Workbook:
 		self.stock_sheet.add_index()
 		for sheet in options:
 			Option_Sheet(self.wb, sheet).copy_index()
+
+	@has_option_sheets
+	@has_stock_sheet
+	def calculate_workbook_iv(self):
+		stock_sheet = self.stock_sheet
+		for sheet in option_sheetnames:
+			option_sheet = Option_Sheet(self.wb, sheet)
+			for i in range(option_sheet.header_index+1, option_sheet.ws_length+1):
+				date = option_sheet.get_value(row=i, col=2)
+				if date != None:
+					pass
+				else:
+					break
+
+		# def iv_calculation(self, row, stock_price, rf_rate):
+		# 	date = self.get_value(row=row, col=2)
+		# 	price = self.get_value(row=row, col=3)
+		# 	return self.option.implied_volatility(date, stock_price, price, rf_rate) 
+
+	@has_option_sheets
+	@has_stock_sheet
+	def calculate_workbook_vega(self):
+		for sheet in option_sheetnames:
+			option_sheet = Option_Sheet(self.wb, sheet)
 
 
 	def delete_sheets(self, include=[]):
