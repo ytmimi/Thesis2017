@@ -7,15 +7,21 @@ BASE_DIR = os.path.abspath(os.pardir)
 path = os.path.join(BASE_DIR,'ma_option_vol')
 sys.path.append(path)
 
-from options import Option, parse_option_description
+from options import Option
 
-@unittest.skip('Tested')
 class Test_Option(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
 		cls.exp_date = dt.datetime(year=2014, month=1, day=3)
 		cls.call = Option('Call', 50, cls.exp_date)
 		cls.put = Option('Put', 45, cls.exp_date)
+
+	def test_parse_option_description(self):
+		description = 'PFE US 12/20/14 P18'
+		type_, date, strike = Option.parse_option_description(description)
+		self.assertEqual(type_, 'Put')
+		self.assertEqual(date, dt.datetime.strptime('12/20/14', '%m/%d/%y'))
+		self.assertEqual(strike, 18)
 
 	def test_print_option(self):
 		call_str = self.call.__str__()

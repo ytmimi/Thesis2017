@@ -1,7 +1,17 @@
 import datetime as dt
 from wallstreet.blackandscholes import BlackandScholes as BS
 
-def parse_option_description(description):
+class Option:
+	def __init__(self, type_, strike, expiration):
+		self.type = type_
+		self.strike = strike
+		self.expiration = expiration
+
+	def __str__(self):
+		return f'{self.expiration :%m/%d/%Y} {self.strike} {self.type}'
+
+	@staticmethod
+	def parse_option_description(description):
 		'''
 		description should be a string that looks similar to 'PFE US 12/20/14 P18'
 		return formatted option data
@@ -15,18 +25,9 @@ def parse_option_description(description):
 		strike_price = float(option_data[-1][1:])
 		return [option_type, expiration_date, strike_price]
 
-class Option:
-	def __init__(self, type_, strike, expiration):
-		self.type = type_
-		self.strike = strike
-		self.expiration = expiration
-
-	def __str__(self):
-		return f'{self.expiration :%m/%d/%Y} {self.strike} {self.type}'
-
 	@classmethod
 	def from_description(cls, description):
-		type_, exp, strike = parse_option_description(description)
+		type_, exp, strike = cls.parse_option_description(description)
 		return cls(type_, strike, exp)
 
 	def days_till_expiration(self, date):
