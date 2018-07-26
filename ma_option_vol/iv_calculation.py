@@ -1,3 +1,4 @@
+import warnings
 import re
 import openpyxl
 import datetime as dt
@@ -26,6 +27,8 @@ def calculate_implied_vol(stock_price, strike_price, days_till_expiration, optio
 
 	dividend_yeild 			optional argument. Should either be a integer or a float
 	'''
+	warnings.warn('''deprecated: Please instantiate the Option class
+        from the options module, then use the implied_volatility method''',)
 	#instance of the BlackandScholes class from the wallstreet module
 	option = BS(S=stock_price, K=strike_price, T=days_till_expiration, price=option_price, r=risk_free_rate, option=option_type, q=dividend_yeild)
 	return option.impvol	
@@ -35,6 +38,8 @@ def days_till_expiration(start_date, expiration_date):
 	'''
 	Given an expiration date, and a a starting date, the days to expiration is calculated
 	'''
+	warnings.warn('''deprecated: Please instantiate the Option class
+        from the options module, then use the days_till_expiration method''',)
 	return (expiration_date-start_date).days
 
 
@@ -44,6 +49,8 @@ def find_starting_risk_free_rate_index(start_date, data_start_row=TREASURY_DATA_
 
 	start_date 		Should be a datetime object
 	'''
+	warnings.warn('''deprecated: Please instantiate the Treasury_Sample_Data class
+        from the data_workbooks module, then use either: rf_3m_on, rf_6m_on, rf_12m_on, or the row_index_by_date methods''',)
 	date_index= find_index_0(worksheet=TREASURY_WORKSHEET,start=data_start_row, end=TOTAL_TREASURY_SHEET_ROWS,date_col=DATE_COLUMN, date_0=start_date)
 	return date_index
 
@@ -52,6 +59,8 @@ def is_negative(num):
 	'''
 	if num is negative, 0 is returned else, num is returned
 	'''
+	warnings.warn('''deprecated: Please instantiate the Treasury_Sample_Data class
+        from the data_workbooks module, then use the equivalent is_negative method''',)
 	if num <0:
 		return True
 	else:
@@ -62,6 +71,8 @@ def calculate_sheet_iv(stock_sheet, option_sheet,sheet_date_column,sheet_price_c
 	'''
 	Given a stock_sheet, and an option_sheet implied volatility is calculated for each row of the option_sheet that contains price data
 	'''
+	warnings.warn('''deprecated: Please instantiate the Option_Sheet class
+        from the data_workbooks module, then use the equivalent sheet_iv_calculation method''',)
 	#get the option_type,expiration_date, and stirke_price from the option_sheet.
 	option_type= option_sheet['B3'].value
 	expiration_date= option_sheet['B4'].value
@@ -136,6 +147,8 @@ def calculate_workbook_iv(workbook_path, sheet_date_column, sheet_price_column, 
 	'''
 	Calculates implied volatility for the data in each options worksheet.
 	'''
+	warnings.warn('''deprecated: Please instantiate the Option_Workbook class
+        from the data_workbooks module, then use the equivalent calculate_workbook_iv method''',)
 	#loads the given workbook
 	wb = openpyxl.load_workbook(workbook_path)
 
