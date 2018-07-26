@@ -471,7 +471,6 @@ class Option_Workbook:
 		self.chain_sheet = Option_Chain_Sheet(self.wb, 'Options Chain')
 		self.data_index = ['Index', 'Date']
 		self.data_headers = ['PX_LAST']
-		# self.treasury_sheet = Treasury_Sample_Data()
 
 	@property
 	def stock_sheet(self):
@@ -570,28 +569,41 @@ class Option_Workbook:
 
 	@has_option_sheets
 	@has_stock_sheet
-	def calculate_workbook_iv(self):
+	def calculate_workbook_iv(self, iv_col, rate, heading):
+		'''
+		iv_col: column to store the results
+		rate: the tresury rate to use: 3, 6, or 12
+		heading: heading for the vega column added to each sheet of the workbook
+		'''
 		stock_sheet = self.stock_sheet
-		for sheet in option_sheetnames:
+		treasury_sheet = Treasury_Sample_Data()
+		for sheet in self.option_sheetnames:
 			option_sheet = Option_Sheet(self.wb, sheet)
 			for i in range(option_sheet.header_index+1, option_sheet.ws_length+1):
-				date = option_sheet.get_value(row=i, col=2)
+				date = option_sheet.get_value(row=i, col=option_sheet.date_col)
 				if date != None:
-					pass
+					option_sheet.sheet_iv_calculation(iv_col, stock_sheet, treasury_sheet, rate=rate, heading=heading)
 				else:
 					break
 
-		# def iv_calculation(self, row, stock_price, rf_rate):
-		# 	date = self.get_value(row=row, col=2)
-		# 	price = self.get_value(row=row, col=3)
-		# 	return self.option.implied_volatility(date, stock_price, price, rf_rate) 
-
 	@has_option_sheets
 	@has_stock_sheet
-	def calculate_workbook_vega(self):
-		for sheet in option_sheetnames:
+	def calculate_workbook_vega(self, vega_col, rate, heading):
+		'''
+		vega_col: column to store the results in
+		rate: the tresury rate to use: 3, 6, or 12
+		heading: heading for the vega column added to each sheet of the workbook
+		'''
+		stock_sheet = self.stock_sheet
+		treasury_sheet = Treasury_Sample_Data()
+		for sheet in self.option_sheetnames:
 			option_sheet = Option_Sheet(self.wb, sheet)
-
+			for i in range(option_sheet.header_index+1, option_sheet.ws_length+1):
+				date = option_sheet.get_value(row=i, col=option_sheet.date_col)
+				if date != None:
+					option_sheet.sheet_vega_calculation(vega_col, stock_sheet, treasury_sheet, rate=rate, heading=heading)
+				else:
+					break
 
 	def delete_sheets(self, include=[]):
 		pass

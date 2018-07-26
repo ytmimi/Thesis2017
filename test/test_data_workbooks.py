@@ -79,6 +79,7 @@ class Test_Data_Worksheet_Decorator_Behavior(unittest.TestCase):
 			col_index_func(self.mock_data_ws, col=self.out_col_range)
 		self.assertEqual(str(err.exception), self.col_err_msg)
 
+
 # @unittest.skip('Tested')
 class Test_Data_WorkSheet(unittest.TestCase):
 	def setUp(self):
@@ -175,6 +176,7 @@ class Test_Data_WorkSheet(unittest.TestCase):
 		result = self.data_ws.letter_to_col_index('AZ')
 		self.assertEqual(result, [52])
 
+
 # @unittest.skip('Tested')
 class Test_Data_Worksheet_copy_data(unittest.TestCase):
 	@classmethod
@@ -212,6 +214,7 @@ class Test_Data_Worksheet_copy_data(unittest.TestCase):
 			ref_val = self.data_ws.get_value(row=i, col=1)
 			test_val = self.test_data_ws.get_value(row=i, col=1)
 			self.assertEqual(ref_val, test_val)
+
 
 # @unittest.skip('Tested')
 class Test_Merger_Sample_Data(unittest.TestCase):
@@ -312,7 +315,6 @@ class Test_VIX_Sample_Data(unittest.TestCase):
 		value = self.vix_sheet.get_vix_on(date=self.date)
 		self.assertEqual(value, 13.15)
 		
-	
 
 # @unittest.skip('Tested')
 class Test_Option_Chain_Sheet(unittest.TestCase):
@@ -392,6 +394,7 @@ class Test_Option_Chain_Sheet_option_exp_in_range(unittest.TestCase):
 		value = self.opt_chain.is_option_exp_in_range(self.date_above_range,
 											from_start=8, past_announcemt=60)
 		self.assertFalse(value)
+
 
 # @unittest.skip('Tested')
 class Test_Stock_Sheet(unittest.TestCase):
@@ -483,6 +486,7 @@ class Test_Stock_Sheet(unittest.TestCase):
 			value = self.stock_sheet.get_value(row=i, col=1)
 			self.assertIsInstance(value, int)
 			self.assertEqual(value, i-index)
+
 
 # @unittest.skip('Tested')
 class Test_Option_Sheet(unittest.TestCase):
@@ -580,6 +584,7 @@ class Test_Option_Sheet(unittest.TestCase):
 		self.assertEqual( message, str(err.exception))
 
 
+# @unittest.skip('Tested')
 class Test_Option_Sheet_iv_and_vega(unittest.TestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -681,6 +686,7 @@ class Test_Option_Sheet_iv_and_vega(unittest.TestCase):
 						self.treasury_sheet,rate=11, heading='Vega')
 		self.assertEqual( message, str(err.exception))
 
+
 # @unittest.skip('Tested')
 class Test_Option_Workbook(unittest.TestCase):
 	@classmethod
@@ -691,6 +697,9 @@ class Test_Option_Workbook(unittest.TestCase):
 		cls.path2 = os.path.join(
 			os.path.dirname(os.path.abspath(__file__)),
 			'samples','Option_BDP_Description_Sample.xlsx',)
+		cls.path3 = os.path.join(
+			os.path.dirname(os.path.abspath(__file__)),
+			'samples','option_test.xlsx',)
 		
 	def setUp(self):
 		self.opt_wb1 = Option_Workbook(self.path1)
@@ -782,13 +791,32 @@ class Test_Option_Workbook(unittest.TestCase):
 		desc_flot = 'PFE US 12/20/14 C18.5'
 		self.assertTrue(self.opt_wb1.proper_desciption_format(desc_flot))
 
-	@unittest.skip('Finish writing method')
 	def test_calculate_wb_iv(self):
-		pass
+		iv_col = 5
+		opt_wb = Option_Workbook(self.path3)
+		opt_wb.calculate_workbook_iv(iv_col, rate=6, heading='IV')
+		for sheet in opt_wb.option_sheetnames:
+			opt_sheet = Option_Sheet(opt_wb.wb, sheet)
+			header = opt_sheet.header_index
+			self.assertEqual(opt_sheet.get_value(row=header,col=iv_col), 'IV')
+			for i in range(header+1, opt_sheet.ws_length+1):
+				date = opt_sheet.get_value(row=i, col=opt_sheet.date_col)
+				if date != None:
+					self.assertTrue(opt_sheet.get_value(row=i, col=iv_col) != None)
 
-	@unittest.skip('Finish writing method')
 	def test_calculate_wb_vega(self):
-		pass
+		vega_col = 6
+		opt_wb = Option_Workbook(self.path3)
+		opt_wb.calculate_workbook_vega(vega_col, rate=6, heading='Vega')
+		for sheet in opt_wb.option_sheetnames:
+			opt_sheet = Option_Sheet(opt_wb.wb, sheet)
+			header = opt_sheet.header_index
+			self.assertEqual(opt_sheet.get_value(row=header,col=vega_col), 'Vega')
+			for i in range(header+1, opt_sheet.ws_length+1):
+				date = opt_sheet.get_value(row=i, col=opt_sheet.date_col)
+				if date != None:
+					self.assertTrue(opt_sheet.get_value(row=i, col=vega_col) != None)
+
 
 @has_stock_sheet
 def stock_func(opt_wb):
@@ -799,6 +827,7 @@ def stock_func(opt_wb):
 def option_func(opt_wb):
 	''' mock function to test the decorators'''
 	return 10
+
 
 # @unittest.skip('Tested')
 class Test_Option_Workbook_Decorator_Behavior(unittest.TestCase):
