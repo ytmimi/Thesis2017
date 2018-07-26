@@ -30,9 +30,9 @@ class Test_Bloomberg_Functions(unittest.TestCase):
 		self.assertEqual(abxl.add_option_BDH(security_name='B4', fields='C3', start_date='A1', end_date='A2', optional_arg=None, optional_val=None),
 			'=BDH(B4,C3,A1,A2)')
 		self.assertEqual(abxl.add_option_BDH(security_name='B4', fields='C3', start_date=dt.datetime(day=5, month=6, year=2013), end_date='A2', optional_arg = None, optional_val=None),
-			'=BDH(B4,C3,20130605,A2)')
+			'=BDH(B4,C3,"20130605",A2)')
 		self.assertEqual(abxl.add_option_BDH(security_name='B4', fields='C3', start_date=dt.date(day=5, month=6, year=2013), end_date='A2', optional_arg = None, optional_val=None),
-			'=BDH(B4,C3,20130605,A2)')
+			'=BDH(B4,C3,"20130605",A2)')
 		self.assertEqual(abxl.add_option_BDH(security_name='B4', fields='C3:C5', start_date='A1', end_date='A2', optional_arg = 'E1:E2', optional_val='F1:F2'),
 			'=BDH(B4,C3:C5,A1,A2,E1:E2,F1:F2)')
 		self.assertEqual(abxl.add_option_BDH(security_name='IBM US EQUITY', fields='PX_BID, PX_ASK, PX_VOLUME', start_date='20150520', end_date='20170915', optional_arg = 'Days', optional_val='W'),
