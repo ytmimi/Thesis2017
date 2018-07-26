@@ -161,7 +161,7 @@ def found_index(func):
 	return inner
 
 class Treasury_Sample_Data(Data_WorkSheet):
-	def __init__(self, workbook=openpyxl.load_workbook(TREASURY_WORKBOOK_PATH), 
+	def __init__(self, workbook=openpyxl.load_workbook(TREASURY_WORKBOOK_PATH, data_only=True), 
 				sheet_name='Rates', header_index=1, date_col=2, col_3m=3, col_6m=4, col_12m=5):
 		super().__init__(workbook, sheet_name, header_index)
 		self.date_col = date_col
@@ -343,14 +343,15 @@ class Option_Sheet(Data_WorkSheet):
 					self.set_value(j, i, fill_value)
 
 	def get_stock_index(self, stock_sheet, date):
+		''' returns the stock index on the given date, or 'N/A'
+			if the date is not in the stock_sheet'''
 		try:
-			stock_sheet.get_index_on(date=date)
+			return stock_sheet.get_index_on(date=date)
 		except IndexError as e:
 			return 'N/A'
 
 	def copy_index(self, stock_sheet):
 		'''copies the numeric index from the given stock_sheet'''
-		# self.copy_data(stock_sheet, 1, 1)
 		for i in range(self.header_index+1, self.ws_length+1):
 			date = self.get_value(row=i, col=self.date_col)
 			if date != None:
@@ -362,25 +363,34 @@ class Option_Sheet(Data_WorkSheet):
 		option_price = self.get_value(row=row, col=self.px_col)
 		if option_price == None or option_price == 0 or stock_price == 0: 
 			self.set_value(row, col, 0)
+			return 0
 		else: 
 			iv = self.option.implied_volatility(date, stock_price, option_price, rf_rate)
 			self.set_value(row, col, iv)
+			return iv
 
 	def add_vega_calculation(self, row, col, date, stock_price, rf_rate):
 		option_price = self.get_value(row=row, col=self.px_col)
-		if option_price > 0:
+		if option_price == None or option_price == 0 or stock_price == 0: 
+			self.set_value(row, col, 0)
+			return 0
+		else: 
 			vega = self.option.vega(date, stock_price, option_price, rf_rate)
-			self.set_value(row, col, iv)
-		else: self.set_value(row, col, 0)
+			self.set_value(row, col, vega)
+			return vega
 
 	def get_stock_price(self, stock_sheet, date):
+		''' Returns the stock price on that date, or zero if the data does not exist'''
 		try:
 			return stock_sheet.get_price_on(date=date)
 		except IndexError as e:
 			return 0
 
 	def get_risk_free_rate(self, treasury_sheet, date, rate):
-		'''Returns the appropriate risk free rate based on the rate argument'''
+		'''
+		Returns the appropriate risk free rate based on the rate argument
+		or zero if the data does not exist
+		'''
 		try:
 			if rate != 3 and rate != 6 and rate != 12:
 				raise ValueError('Rate must be set to either 3, 6, or 12')
@@ -391,30 +401,47 @@ class Option_Sheet(Data_WorkSheet):
 		except IndexError as e:
 			return 0
 
-		
-
 	def sheet_iv_calculation(self, col, stock_sheet, treasury_sheet, *,rate, heading):
 		''' 
 		col: the colom to store the calculation in 
-		stock_sheet: the stock sheet associated with the option sheet
+		stock_sheet: instance of the Stock_Sheet class associated with the option
 		teasury_sheet: sheet containing treasury data
 		rate: either 3, 6, or 12 depending on which type of treasury you want
+		heading: column heading to add to the worksheet
 		'''
 		self.set_value(self.header_index, col, heading)
 		for i in range(self.header_index+1, self.ws_length+1):
 			date = self.get_value(row=i, col=self.date_col)
-			if date != None:
+			index = self.get_value(row=i, col=1)
+			if date == None:
+				break
+			elif index == 'N/A':
+				self.set_value(i, col, 0)
+			else:
 				stock_price = self.get_stock_price(stock_sheet, date)
 				rf_rate = self.get_risk_free_rate(treasury_sheet, date, rate)
 				self.add_iv_calculation(i, col, date, stock_price, rf_rate)
-			else:
-				break
 
-	def sheet_vega_calculation(self,row, stock_sheet, treasury_sheet):
-		date = self.get_value(row=row, col=self.date_col)
-		# price = self.get_value(row=row, col=3)
-		# return self.option.vega(date, stock_price, price, rf_rate)
-		pass
+	def sheet_vega_calculation(self,col, stock_sheet, treasury_sheet, *, rate, heading):
+		''' 
+		col: the colom to store the calculation in 
+		stock_sheet: instance of the Stock_Sheet class associated with the option
+		teasury_sheet: sheet containing treasury data
+		rate: either 3, 6, or 12 depending on which type of treasury you want
+		heading: column heading to add to the worksheet
+		'''
+		self.set_value(self.header_index, col, heading)
+		for i in range(self.header_index+1, self.ws_length+1):
+			date = self.get_value(row=i, col=self.date_col)
+			index = self.get_value(row=i, col=1)
+			if date == None:
+				break
+			elif index == 'N/A':
+				self.set_value(i, col, 0)
+			else:
+				stock_price = self.get_stock_price(stock_sheet, date)
+				rf_rate = self.get_risk_free_rate(treasury_sheet, date, rate)
+				self.add_vega_calculation(i, col, date, stock_price, rf_rate)
 
 def has_stock_sheet(func):
 	'''Decorator that checks if the Option_Workbook has a stock sheet'''

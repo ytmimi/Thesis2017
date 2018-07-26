@@ -402,14 +402,17 @@ class Test_Stock_Sheet(unittest.TestCase):
 			'samples','test_stock_and_option_sheet.xlsx',)
 		cls.wb = load_workbook(cls.path)
 		cls.ws_name = cls.wb.sheetnames[1]
-		# print(cls.ws_name)
-		cls.stock_sheet = Stock_Sheet(cls.wb, cls.ws_name)
 		cls.date = dt.datetime(year=2013,month=7, day=24)
-		stock_lables = ['Company Name','Ticker','Start Date', 'Announcement Date','End Date']
 
-	@unittest.skip('Untested fill out')
+	def setUp(self):
+		self.stock_sheet = Stock_Sheet(self.wb, self.ws_name)
+
 	def test_stock_sheet_details(self):
-		pass
+		self.assertEqual(self.stock_sheet.get_value(row=1,col=1), 'Company Name')
+		self.assertEqual(self.stock_sheet.get_value(row=2,col=1), 'Company Ticker')
+		self.assertEqual(self.stock_sheet.get_value(row=3,col=1), 'Start Date')
+		self.assertEqual(self.stock_sheet.get_value(row=4,col=1), 'Announcement Date')
+		self.assertEqual(self.stock_sheet.get_value(row=5,col=1), 'End Date')
 
 	def test_row_index_by_date(self):
 		value = self.stock_sheet.row_index_by_date(date=self.date)
@@ -418,6 +421,13 @@ class Test_Stock_Sheet(unittest.TestCase):
 	def test_get_price_on(self):
 		value = self.stock_sheet.get_price_on(date=self.date)
 		self.assertEqual(value, 43.64)
+
+	def test_get_index_on(self):
+		self.stock_sheet.add_index()
+		index = self.stock_sheet.get_index_on(date=self.date)
+		self.assertEqual(index, -249)
+		index = self.stock_sheet.get_index_on(date=self.stock_sheet.announce_date)
+		self.assertEqual(index, 0)
 
 	def test_px_last_lst(self):
 		price_list = self.stock_sheet.px_last_lst()
@@ -504,9 +514,13 @@ class Test_Option_Sheet(unittest.TestCase):
 		cls.date = cls.stock_sheet.ws['B12'].value
 
 
-	@unittest.skip('Untested fill out')
 	def test_option_sheet_details(self):
-		pass
+		#test the metadata headers
+		self.assertEqual(self.option_sheet.get_value(row=1,col=1), 'Ticker')
+		self.assertEqual(self.option_sheet.get_value(row=2,col=1), 'Description')
+		self.assertEqual(self.option_sheet.get_value(row=3,col=1), 'Type')
+		self.assertEqual(self.option_sheet.get_value(row=4,col=1), 'Expiration Date')
+		self.assertEqual(self.option_sheet.get_value(row=5,col=1), 'Strike Price')
 		
 	def test_fill_empty_cells(self):
 		empty_cells = {'count':0, 'cells':[]}
@@ -522,18 +536,38 @@ class Test_Option_Sheet(unittest.TestCase):
 		for cell in empty_cells['cells']:
 			self.assertTrue(self.option_sheet.ws[cell].value == fill_value)
 
+	def test_get_stock_index(self):
+		#self.stock_sheet
+		date = self.stock_sheet.ws['B13'].value
+		index = self.option_sheet.get_stock_index(self.stock_sheet, date)
+		self.assertEqual(index, -252)
+
 	def test_copy_index(self):
 		#show that the index is blank
-		for i in range(self.stock_sheet.header_index+1, self.stock_sheet.ws_length+1):
+		for i in range(self.option_sheet.header_index+1, self.option_sheet.ws_length+1):
 			option_index = self.option_sheet.ws.cell(row=i, column=1).value
 			self.assertEqual(option_index, None)
 		#run the function:
 		self.option_sheet.copy_index(self.stock_sheet)
-		for i in range(self.stock_sheet.header_index+1, self.stock_sheet.ws_length+1):
+		for i in range(self.option_sheet.header_index+1, self.option_sheet.ws_length+1):
 			option_index = self.option_sheet.get_value(row=i, col=1)
-			stock_index = self.stock_sheet.get_value(row=i, col=1)
-			self.assertEqual(option_index, stock_index)
+			date = self.option_sheet.get_value(row=i, col=self.option_sheet.date_col)
+			if option_index != 'N/A':
+				stock_index = self.stock_sheet.get_index_on(date=date)
+				self.assertEqual(option_index, stock_index)
 
+	def test_get_stock_price_valid_date(self):
+		date = self.stock_sheet.ws['B14'].value
+		price = self.option_sheet.get_stock_price(self.stock_sheet, date)
+		self.assertIsInstance(price, float)
+		self.assertEqual(price, 44.97)
+
+	def test_get_stock_price_invalid_date(self):
+		date = dt.datetime(year=2019, month=1, day=1)
+		value = self.option_sheet.get_stock_price(self.stock_sheet, date)
+		#because the date is not in the sheet, 0 should be returned
+		self.assertEqual(value, 0)
+				
 	def test_get_risk_free_rate_3_6_or_12(self):
 		for rate in [3, 6, 12]:
 			rf = self.option_sheet.get_risk_free_rate(self.treasury_sheet, self.date, rate)
@@ -545,14 +579,72 @@ class Test_Option_Sheet(unittest.TestCase):
 			self.option_sheet.get_risk_free_rate(self.treasury_sheet, self.date, 10)
 		self.assertEqual( message, str(err.exception))
 
-	def test_iv_calculation_correct(self):
+
+class Test_Option_Sheet_iv_and_vega(unittest.TestCase):
+	@classmethod
+	def setUpClass(cls):
+		cls.test_path = os.path.join(base_test.TEST_TARGET_PATH, 'test_option_sheet.xlsx')
+		cls.path = os.path.join(
+			os.path.dirname(os.path.abspath(__file__)),
+			'samples','option_test.xlsx',)
+		wb = load_workbook(cls.path)
+		cls.wb_sheets = wb.sheetnames
+		wb.save(cls.test_path)
+		cls.option_workbook = Option_Workbook(cls.test_path)
+		cls.stock_sheet = cls.option_workbook.stock_sheet
+		cls.treasury_sheet = Treasury_Sample_Data()
+
+	def setUp(self):
+		self.option_sheet = Option_Sheet(self.option_workbook.wb, self.wb_sheets[2])
+
+	def test_add_iv_calculation(self):
+		row = 12
+		date = self.option_sheet.get_value(row=row, col=2)
+		col = self.option_sheet.ws_width+1
+		stock_price = self.stock_sheet.get_price_on(date=date)
+		rf_rate =  self.treasury_sheet.rf_6m_on(date=date)
+		#assert that the cell is empty:
+		self.assertEqual(self.option_sheet.ws.cell(row=row, column=col).value, None)
+		#run the function
+		iv = self.option_sheet.add_iv_calculation(row, col, date, stock_price, rf_rate)
+		self.assertIsInstance(self.option_sheet.get_value(row=row, col=col), float)
+		self.assertEqual(self.option_sheet.get_value(row=row, col=col), iv)
+
+	def test_add_vega_calculation(self):
+		row = 14
+		date = self.option_sheet.get_value(row=row, col=2)
+		col = self.option_sheet.ws_width+1
+		stock_price = self.stock_sheet.get_price_on(date=date)
+		rf_rate =  self.treasury_sheet.rf_6m_on(date=date)
+		#assert that the cell is empty:
+		self.assertEqual(self.option_sheet.ws.cell(row=row, column=col).value, None)
+		#run the function
+		vega = self.option_sheet.add_vega_calculation(row, col, date, stock_price, rf_rate)
+		self.assertIsInstance(self.option_sheet.get_value(row=row, col=col), float)
+		self.assertEqual(self.option_sheet.get_value(row=row, col=col), vega)
+
+	def test_sheet_iv_calculation_correct(self):
 		header_row = self.option_sheet.header_index
 		col = self.option_sheet.ws_width+1
+		row = self.option_sheet.header_index+1
+		#loop over the date column until its empty
+		while self.option_sheet.get_value(row=row, col=self.option_sheet.date_col) !=None:
+			value = self.option_sheet.ws.cell(row=row, column=col).value
+			self.assertEqual(value, None)
+			row+=1
+		#call the function
 		self.option_sheet.sheet_iv_calculation(col, self.stock_sheet, 
-						self.treasury_sheet, rate=3, heading='3Month IV')
-		self.assertEqual(self.option_sheet.get_value(row=header_row, col=col), '3Month IV')
+						self.treasury_sheet, rate=3, heading='test heading')
+		#assert that the heading was added correctly
+		self.assertEqual(self.option_sheet.get_value(row=header_row, col=col), 'test heading')
+		row = self.option_sheet.header_index+1
+		#assert that the same cells checked before now have values
+		while self.option_sheet.get_value(row=row, col=self.option_sheet.date_col) !=None:
+			value = self.option_sheet.get_value(row=row, col=col)
+			self.assertTrue(value != None)
+			row+=1
 
-	def test_iv_calculation_error(self):
+	def test_sheet_iv_calculation_error(self):
 		message = 'Rate must be set to either 3, 6, or 12'
 		col = self.option_sheet.ws_width+1
 		with self.assertRaises(ValueError)as err:
@@ -560,9 +652,34 @@ class Test_Option_Sheet(unittest.TestCase):
 						self.treasury_sheet,rate=10, heading='3Month IV')
 		self.assertEqual( message, str(err.exception))
 
-	@unittest.skip('Fill out method body')
-	def test_vega_calculation(self):
-		pass
+	def test_sheet_vega_calculation(self):
+		header_row = self.option_sheet.header_index
+		col = self.option_sheet.ws_width+1
+		row = self.option_sheet.header_index+1
+		#loop over the date column until its empty
+		while self.option_sheet.get_value(row=row, col=self.option_sheet.date_col) !=None:
+			value = self.option_sheet.ws.cell(row=row, column=col).value
+			self.assertEqual(value, None)
+			row+=1
+		#call the function
+		self.option_sheet.sheet_vega_calculation(col, self.stock_sheet, 
+						self.treasury_sheet, rate=6, heading='test heading')
+		#assert that the heading was added correctly
+		self.assertEqual(self.option_sheet.get_value(row=header_row, col=col), 'test heading')
+		row = self.option_sheet.header_index+1
+		#assert that the same cells checked before now have values
+		while self.option_sheet.get_value(row=row, col=self.option_sheet.date_col) !=None:
+			value = self.option_sheet.get_value(row=row, col=col)
+			self.assertTrue(value != None)
+			row+=1
+
+	def test_sheet_vega_calculation_error(self):
+		message = 'Rate must be set to either 3, 6, or 12'
+		col = self.option_sheet.ws_width+1
+		with self.assertRaises(ValueError)as err:
+			self.option_sheet.sheet_vega_calculation(col, self.stock_sheet, 
+						self.treasury_sheet,rate=11, heading='Vega')
+		self.assertEqual( message, str(err.exception))
 
 # @unittest.skip('Tested')
 class Test_Option_Workbook(unittest.TestCase):
@@ -664,6 +781,14 @@ class Test_Option_Workbook(unittest.TestCase):
 		self.assertTrue(self.opt_wb1.proper_desciption_format(desc_int))
 		desc_flot = 'PFE US 12/20/14 C18.5'
 		self.assertTrue(self.opt_wb1.proper_desciption_format(desc_flot))
+
+	@unittest.skip('Finish writing method')
+	def test_calculate_wb_iv(self):
+		pass
+
+	@unittest.skip('Finish writing method')
+	def test_calculate_wb_vega(self):
+		pass
 
 @has_stock_sheet
 def stock_func(opt_wb):
