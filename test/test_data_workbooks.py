@@ -293,6 +293,17 @@ class Test_Treasury_Sample_Data(unittest.TestCase):
 		value = self.treasury_sheet.rf_12m_on(date=self.date)
 		self.assertEqual(value, 0.00124)
 
+	def test_rf_on_invalid_date(self):
+		date = dt.datetime(year=2010, month=1, day=1)
+		message = 'Date not found'
+		rf_3m_on = self.treasury_sheet.rf_3m_on
+		rf_6m_on = self.treasury_sheet.rf_6m_on
+		rf_12m_on = self.treasury_sheet.rf_12m_on
+		for func in [rf_3m_on, rf_6m_on, rf_12m_on]:
+			with self.assertRaises(IndexError) as err:
+				func(date=date)
+			self.assertEqual(str(err.exception), message)
+
 	def test_is_negative_above(self):
 		self.assertEqual(self.treasury_sheet.is_negative(10), 10)
 
@@ -314,7 +325,14 @@ class Test_VIX_Sample_Data(unittest.TestCase):
 	def test_vix_on(self):
 		value = self.vix_sheet.get_vix_on(date=self.date)
 		self.assertEqual(value, 13.15)
-		
+
+	def test_vix_on_invalid_date(self):
+		date = dt.datetime(year=2010, month=1, day=1)
+		message = 'Date not found'
+		with self.assertRaises(IndexError) as err:
+			self.vix_sheet.get_vix_on(date=date)
+		self.assertEqual(str(err.exception), message)
+
 
 # @unittest.skip('Tested')
 class Test_Option_Chain_Sheet(unittest.TestCase):
